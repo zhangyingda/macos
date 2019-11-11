@@ -1,0 +1,95 @@
+<html>
+  <head>
+
+    <title>
+      The C Programming Language Exercise 7-9
+    </title>
+
+  <BODY    text="#000000"
+        bgcolor="#DDDDDD"
+           link="#800000"
+          alink="#008000"
+          vlink="#000080">
+
+
+<center>
+<h2>
+  &quot;The C Programming Language&quot;, 2nd edition, Kernighan and Ritchie
+</h2>
+<h3>
+  Answer to Exercise 7-9, page 168
+</h3>
+<h4>
+  Solution by <a href=mailto:gkp1@flash.net>  Gregory Pietsch </a>
+</h4>
+</center>
+
+<i>
+Functions like <code>isupper</code> can be implemented to save space or to save time. Explore both possibilities.
+</i>
+<br>
+<br>
+This question is best left to an essay rather than code, so here's my take:
+
+The easiest way to implement the eleven <code>is()</code> functions in C90's version
+of <code>&lt;ctype.h&gt;</code> is via a table lookup.  If <code>UCHAR_MAX</code> is 255, then a table
+would take up around 514 8-bit bytes and still have room for five more
+ <code>is()</code> functions.  In modern programs, this is a miniscule expense of both
+space and time since a mere table lookup doesn't cost a whole lot
+(although space may be a priority for embedded systems).
+
+Additionally, since the <code>is()</code> functions of <code>&lt;ctype.h&gt;</code> are locale-dependent
+and therefore subject to locale-specific whims, a table could more
+easily be modified than modifying hard calculations.  Consider the
+following three implementations of <code>isupper()</code> :
+
+Implementation #1:
+
+<code>
+<pre>
+<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">isupper</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+    <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">&gt;=</FONT> <FONT COLOR="#000000"><B>'A'</B></FONT> <FONT COLOR="#000080">&amp;&amp;</FONT> <FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">&lt;=</FONT> <FONT COLOR="#000000"><B>'Z'</B></FONT><FONT COLOR="#000080">);</FONT>
+<FONT COLOR="#000080">}</FONT>
+</pre>
+</code>
+
+
+Implementation #2:
+
+<code>
+<pre>
+<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">isupper</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+    <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">strchr</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;ABCDEFGHIJKLMNOPQRSTUVWXYZ&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">);</FONT>
+<FONT COLOR="#000080">}</FONT>
+</pre>
+</code>
+
+
+Implementation #3:
+
+<code>
+<pre>
+<FONT COLOR="#008080">/* Presumably, _UP is a power of 2 and 
+ * _Ctype is a table
+ */</FONT>
+
+<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">isupper</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+    <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#000080">((</FONT><FONT COLOR="#008000">_Ctype</FONT><FONT COLOR="#000080">[(</FONT><B><FONT COLOR="#000080">unsigned</FONT></B> <B><FONT COLOR="#000080">char</FONT></B><FONT COLOR="#000080">)</FONT><FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">&amp;</FONT> <FONT COLOR="#008000">_UP</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">);</FONT>
+<FONT COLOR="#000080">}</FONT>
+</pre>
+</code>
+
+
+Implementation #1 fails in <code>EBCDIC</code> and implementation #2 fails in a
+locale that adds more upperspace characters than the ones mentioned. 
+Implementation #3, however, suggests that <code>_Ctype[]</code> can be modified to
+accommodate new uppercase characters.
+<br>
+<br>
+<br>
+<br>
+
+<a href=index.html>  Back to index </a></body></html>

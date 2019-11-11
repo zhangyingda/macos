@@ -1,0 +1,207 @@
+<html>
+  <head>
+
+    <title>
+      The C Programming Language Exercise 1-21
+    </title>
+
+  <BODY    text="#000000"
+        bgcolor="#DDDDDD"
+           link="#800000"
+          alink="#008000"
+          vlink="#000080">
+
+
+<center>
+<h2>
+  &quot;The C Programming Language&quot;, 2nd edition, Kernighan and Ritchie
+</h2>
+<h3>
+  Answer to Exercise 1-21, page 34
+</h3>
+<h4>
+Category 0 Solution by <a href=mailto:rick@ricken.demon.co.uk>  Rick Dearman </a>
+<br>
+Category 1 Solution by <a href=mailto:e0026813@stud3.tuwien.ac.at>  Stefan Farfeleder </a>
+</h4>
+</center>
+
+<i>
+Write a program <code>entab</code> that replaces strings of blanks with the minimum number of tabs and blanks 
+to achieve the same spacing. Use the same stops as for <code>detab</code> . When either a tab or a single blank
+would suffice to reach a tab stop, which should be given preference?
+</i>
+<br>
+<br>
+
+Rick Dearman's Cat 0 solution:
+<br>
+<br>
+<code>
+<pre>
+<FONT COLOR="#008080">/******************************************************
+   KnR 1-21
+   --------
+   Write a program &quot;entab&quot; which replaces strings of 
+   blanks with the minimum number of tabs and blanks 
+   to achieve the same spacing.
+
+   Author: Rick Dearman
+   email: rick@ricken.demon.co.uk
+
+******************************************************/</FONT>
+<FONT COLOR="#0000FF"><B>#include &lt;stdio.h&gt;</B></FONT>
+
+<FONT COLOR="#0000FF"><B>#define MAXLINE 1000 /* max input line size */</B></FONT>
+<FONT COLOR="#0000FF"><B>#define TAB2SPACE 4 /* 4 spaces to a tab */</B></FONT>
+
+<B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#008000">line</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">MAXLINE</FONT><FONT COLOR="#000080">];</FONT> <FONT COLOR="#008080">/*current input line*/</FONT>
+
+<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">getline</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">void</FONT></B><FONT COLOR="#000080">);</FONT>  <FONT COLOR="#008080">/* taken from the KnR book. */</FONT>
+
+
+<B><FONT COLOR="#000080">int</FONT></B>
+<FONT COLOR="#008000">main</FONT><FONT COLOR="#000080">()</FONT>
+<FONT COLOR="#000080">{</FONT>
+  <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">,</FONT><FONT COLOR="#008000">t</FONT><FONT COLOR="#000080">;</FONT>
+  <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">spacecount</FONT><FONT COLOR="#000080">,</FONT><FONT COLOR="#008000">len</FONT><FONT COLOR="#000080">;</FONT>
+
+  <B><FONT COLOR="#000080">while</FONT></B> <FONT COLOR="#000080">((</FONT> <FONT COLOR="#008000">len</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">getline</FONT><FONT COLOR="#000080">())</FONT> <FONT COLOR="#000080">&gt;</FONT> <FONT COLOR="#000000"><B>0</B></FONT> <FONT COLOR="#000080">)</FONT>
+    <FONT COLOR="#000080">{</FONT>
+      <FONT COLOR="#008000">spacecount</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+      <B><FONT COLOR="#000080">for</FONT></B><FONT COLOR="#000080">(</FONT> <FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">=</FONT><FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008000">i</FONT> <FONT COLOR="#000080">&lt;</FONT> <FONT COLOR="#008000">len</FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">++)</FONT>
+	<FONT COLOR="#000080">{</FONT>
+	  <B><FONT COLOR="#000080">if</FONT></B><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">line</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>' '</B></FONT><FONT COLOR="#000080">)</FONT>
+	    <FONT COLOR="#008000">spacecount</FONT><FONT COLOR="#000080">++;</FONT> <FONT COLOR="#008080">/* increment counter for each space */</FONT>
+	  <B><FONT COLOR="#000080">if</FONT></B><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">line</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#000000"><B>' '</B></FONT><FONT COLOR="#000080">)</FONT>
+	    <FONT COLOR="#008000">spacecount</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008080">/* reset counter */</FONT>
+	  <B><FONT COLOR="#000080">if</FONT></B><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">spacecount</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#008000">TAB2SPACE</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#008080">/* Now we have enough spaces
+				      ** to replace them with a tab
+				      */</FONT>
+	    <FONT COLOR="#000080">{</FONT>
+	      <FONT COLOR="#008080">/* Because we are removing 4 spaces and
+	      ** replacing them with 1 tab we move back 
+	      ** three chars and replace the ' ' with a \t
+	      */</FONT>
+	      <FONT COLOR="#008000">i</FONT> <FONT COLOR="#000080">-=</FONT> <FONT COLOR="#000000"><B>3</B></FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008080">/* same as &quot;i = i - 3&quot; */</FONT>
+	      <FONT COLOR="#008000">len</FONT> <FONT COLOR="#000080">-=</FONT> <FONT COLOR="#000000"><B>3</B></FONT><FONT COLOR="#000080">;</FONT>
+	      <FONT COLOR="#008000">line</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>'\t'</B></FONT><FONT COLOR="#000080">;</FONT>
+	      <FONT COLOR="#008080">/* Now move all the char's to the right into the
+	      ** places we have removed.
+	      */</FONT>
+	      <B><FONT COLOR="#000080">for</FONT></B><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">t</FONT><FONT COLOR="#000080">=</FONT><FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">+</FONT><FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">;</FONT><FONT COLOR="#008000">t</FONT><FONT COLOR="#000080">&lt;</FONT><FONT COLOR="#008000">len</FONT><FONT COLOR="#000080">;</FONT><FONT COLOR="#008000">t</FONT><FONT COLOR="#000080">++)</FONT>
+		<FONT COLOR="#008000">line</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">t</FONT><FONT COLOR="#000080">]=</FONT><FONT COLOR="#008000">line</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">t</FONT><FONT COLOR="#000080">+</FONT><FONT COLOR="#000000"><B>3</B></FONT><FONT COLOR="#000080">];</FONT>
+	      <FONT COLOR="#008080">/* Now set the counter back to zero and move the 
+	      ** end of line back 3 spaces
+	      */</FONT>
+	      <FONT COLOR="#008000">spacecount</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+	      <FONT COLOR="#008000">line</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">len</FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>'\0'</B></FONT><FONT COLOR="#000080">;</FONT> 
+	    <FONT COLOR="#000080">}</FONT>
+	<FONT COLOR="#000080">}</FONT>
+      <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;%s&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">line</FONT><FONT COLOR="#000080">);</FONT>
+    <FONT COLOR="#000080">}</FONT>
+  <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+
+<FONT COLOR="#008080">/* getline: specialized version */</FONT>
+<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">getline</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">void</FONT></B><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+  <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">;</FONT>
+  <B><FONT COLOR="#000080">extern</FONT></B> <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#008000">line</FONT><FONT COLOR="#000080">[];</FONT>
+  
+  <B><FONT COLOR="#000080">for</FONT></B> <FONT COLOR="#000080">(</FONT> <FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">=</FONT><FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT><FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">&lt;</FONT><FONT COLOR="#008000">MAXLINE</FONT><FONT COLOR="#000080">-</FONT><FONT COLOR="#000000"><B>1</B></FONT> <FONT COLOR="#000080">&amp;&amp;</FONT> <FONT COLOR="#000080">(</FONT> <FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">=</FONT><FONT COLOR="#008000">getchar</FONT><FONT COLOR="#000080">())</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#008000">EOF</FONT> <FONT COLOR="#000080">&amp;&amp;</FONT> <FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#000000"><B>'\n'</B></FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#000080">++</FONT><FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">)</FONT>
+    <FONT COLOR="#008000">line</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">;</FONT>
+  <B><FONT COLOR="#000080">if</FONT></B><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'\n'</B></FONT><FONT COLOR="#000080">)</FONT> 
+    <FONT COLOR="#000080">{</FONT>
+      <FONT COLOR="#008000">line</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">;</FONT>
+      <FONT COLOR="#000080">++</FONT><FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">;</FONT>
+    <FONT COLOR="#000080">}</FONT>
+  <FONT COLOR="#008000">line</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>'\0'</B></FONT><FONT COLOR="#000080">;</FONT>
+  <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">;</FONT>
+
+<FONT COLOR="#000080">}</FONT>
+</pre>
+</code>
+
+<br>
+<br>
+<br>
+Stefan Farfeleder's Cat 1 solution:
+<br>
+<br>
+<code>
+<pre>
+<FONT COLOR="#008080">/* 1-21.c */</FONT>
+
+<FONT COLOR="#0000FF"><B>#include &lt;stdio.h&gt;</B></FONT>
+
+<FONT COLOR="#0000FF"><B>#define TABSTOP 4</B></FONT>
+
+<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">main</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">void</FONT></B><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+    <FONT COLOR="#008000">size_t</FONT> <FONT COLOR="#008000">spaces</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+    <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">ch</FONT><FONT COLOR="#000080">;</FONT>
+    <FONT COLOR="#008000">size_t</FONT> <FONT COLOR="#008000">x</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>               <FONT COLOR="#008080">/* position in the line */</FONT>
+    <FONT COLOR="#008000">size_t</FONT> <FONT COLOR="#008000">tabstop</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">TABSTOP</FONT><FONT COLOR="#000080">;</FONT>   <FONT COLOR="#008080">/* get this from the command-line 
+                                 * if you want to */</FONT>
+
+    <B><FONT COLOR="#000080">while</FONT></B> <FONT COLOR="#000080">((</FONT><FONT COLOR="#008000">ch</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">getchar</FONT><FONT COLOR="#000080">())</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#008000">EOF</FONT><FONT COLOR="#000080">)</FONT>
+    <FONT COLOR="#000080">{</FONT>
+        <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">ch</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>' '</B></FONT><FONT COLOR="#000080">)</FONT>
+        <FONT COLOR="#000080">{</FONT>
+            <FONT COLOR="#008000">spaces</FONT><FONT COLOR="#000080">++;</FONT>
+        <FONT COLOR="#000080">}</FONT>
+        <B><FONT COLOR="#000080">else</FONT></B> <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">spaces</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#008080">/* no space, just printing */</FONT>
+        <FONT COLOR="#000080">{</FONT>
+            <FONT COLOR="#008000">putchar</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">ch</FONT><FONT COLOR="#000080">);</FONT>
+            <FONT COLOR="#008000">x</FONT><FONT COLOR="#000080">++;</FONT>
+        <FONT COLOR="#000080">}</FONT>
+        <B><FONT COLOR="#000080">else</FONT></B> <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">spaces</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#008080">/* just one space, never print a tab */</FONT>
+        <FONT COLOR="#000080">{</FONT>
+            <FONT COLOR="#008000">putchar</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000"><B>' '</B></FONT><FONT COLOR="#000080">);</FONT>
+            <FONT COLOR="#008000">putchar</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">ch</FONT><FONT COLOR="#000080">);</FONT>
+            <FONT COLOR="#008000">x</FONT> <FONT COLOR="#000080">+=</FONT> <FONT COLOR="#000000"><B>2</B></FONT><FONT COLOR="#000080">;</FONT>
+            <FONT COLOR="#008000">spaces</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+        <FONT COLOR="#000080">}</FONT>
+        <B><FONT COLOR="#000080">else</FONT></B>
+        <FONT COLOR="#000080">{</FONT>
+            <B><FONT COLOR="#000080">while</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">x</FONT> <FONT COLOR="#000080">/</FONT> <FONT COLOR="#008000">tabstop</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">x</FONT> <FONT COLOR="#000080">+</FONT> <FONT COLOR="#008000">spaces</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">/</FONT> <FONT COLOR="#008000">tabstop</FONT><FONT COLOR="#000080">)</FONT> 
+                <FONT COLOR="#008080">/* are the spaces reaching behind the next tabstop ? */</FONT>
+            <FONT COLOR="#000080">{</FONT>
+                <FONT COLOR="#008000">putchar</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000"><B>'\t'</B></FONT><FONT COLOR="#000080">);</FONT>
+                <FONT COLOR="#008000">x</FONT><FONT COLOR="#000080">++;</FONT>
+                <FONT COLOR="#008000">spaces</FONT><FONT COLOR="#000080">--;</FONT>
+                <B><FONT COLOR="#000080">while</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">x</FONT> <FONT COLOR="#000080">%</FONT> <FONT COLOR="#008000">tabstop</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">)</FONT>
+                <FONT COLOR="#000080">{</FONT>
+                    <FONT COLOR="#008000">x</FONT><FONT COLOR="#000080">++;</FONT>
+                    <FONT COLOR="#008000">spaces</FONT><FONT COLOR="#000080">--;</FONT>
+                <FONT COLOR="#000080">}</FONT>
+            <FONT COLOR="#000080">}</FONT>
+
+            <B><FONT COLOR="#000080">while</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">spaces</FONT> <FONT COLOR="#000080">&gt;</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#008080">/* the remaining ones are real space */</FONT>
+            <FONT COLOR="#000080">{</FONT>
+                <FONT COLOR="#008000">putchar</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000"><B>' '</B></FONT><FONT COLOR="#000080">);</FONT>
+                <FONT COLOR="#008000">x</FONT><FONT COLOR="#000080">++;</FONT>
+                <FONT COLOR="#008000">spaces</FONT><FONT COLOR="#000080">--;</FONT>
+            <FONT COLOR="#000080">}</FONT>
+            <FONT COLOR="#008000">putchar</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">ch</FONT><FONT COLOR="#000080">);</FONT> <FONT COLOR="#008080">/* now print the non-space char */</FONT>
+            <FONT COLOR="#008000">x</FONT><FONT COLOR="#000080">++;</FONT>
+        <FONT COLOR="#000080">}</FONT>
+        <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">ch</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'\n'</B></FONT><FONT COLOR="#000080">)</FONT>
+        <FONT COLOR="#000080">{</FONT>
+            <FONT COLOR="#008000">x</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008080">/* reset line position */</FONT>
+        <FONT COLOR="#000080">}</FONT>
+    <FONT COLOR="#000080">}</FONT>
+
+    <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+<FONT COLOR="#000080">}</FONT>
+</pre>
+</code>
+
+<br>
+<br>
+
+<br>
+
+<a href=index.html>  Back to index </a></body></html>

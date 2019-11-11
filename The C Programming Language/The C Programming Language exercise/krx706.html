@@ -1,0 +1,245 @@
+<html>
+  <head>
+
+    <title>
+      The C Programming Language Exercise 7-6
+    </title>
+
+  <BODY    text="#000000"
+        bgcolor="#DDDDDD"
+           link="#800000"
+          alink="#008000"
+          vlink="#000080">
+
+
+<center>
+<h2>
+  &quot;The C Programming Language&quot;, 2nd edition, Kernighan and Ritchie
+</h2>
+<h3>
+  Answer to Exercise 7-6, page 165
+</h3>
+<h4>
+  Solutions by Rick Dearman and <a href=mailto:flippant_squirrel@yahoo.com>  &quot;Flippant Squirrel&quot; </a> .
+</h4>
+</center>
+
+<br>
+<br>
+
+<i>
+Write a program to compare two files, printing the first line where they differ.
+</i>
+<br>
+<br>
+
+Here's Rick's solution:
+<br>
+<br>
+<code>
+<pre>
+<FONT COLOR="#008080">/******************************************************
+   KnR 7-6
+   --------
+   Write a program to compare two files and print the
+   first line where they differ.
+
+   Author: Rick Dearman
+   email: rick@ricken.demon.co.uk
+
+   Note: This program prints ALL the lines that are 
+         different using the &lt;&gt; indicators used by
+	 the unix diff command. However this program
+	 will not cope with something as simple as a
+	 line being removed.
+	 
+	 In reality the program would be more useful
+	 if it searched forward for matching lines. 
+	 This would be a better indicator of the simple
+	 removal of some lines.
+	 
+	 This has lead me to track down a version of the 
+	 &quot;diff&quot; command available on GNU/Linux systems.
+	 for more information go to the web site at:
+	 www.gnu.org
+
+******************************************************/</FONT>
+<FONT COLOR="#0000FF"><B>#include &lt;stdio.h&gt;</B></FONT>
+<FONT COLOR="#0000FF"><B>#include &lt;string.h&gt;</B></FONT>
+<FONT COLOR="#0000FF"><B>#define MAXLINE 1000</B></FONT>
+
+<B><FONT COLOR="#000080">void</FONT></B> <FONT COLOR="#008000">diff_line</FONT><FONT COLOR="#000080">(</FONT> <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">lineone</FONT><FONT COLOR="#000080">,</FONT> <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">linetwo</FONT><FONT COLOR="#000080">,</FONT> <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">linenumber</FONT> <FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+  <B><FONT COLOR="#000080">if</FONT></B><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">strcmp</FONT> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">lineone</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">linetwo</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">&lt;</FONT> <FONT COLOR="#000000"><B>0</B></FONT> <FONT COLOR="#000080">||</FONT> <FONT COLOR="#008000">strcmp</FONT> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">lineone</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">linetwo</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">&gt;</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">)</FONT>
+    <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT> <FONT COLOR="#000000">&quot;%d&lt;%s\n%d&gt;%s\n&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">linenumber</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">lineone</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">linenumber</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">linetwo</FONT><FONT COLOR="#000080">);</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">main</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">argc</FONT><FONT COLOR="#000080">,</FONT> <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">[]</FONT> <FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+  <FONT COLOR="#008000">FILE</FONT> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">fp1</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">fp2</FONT><FONT COLOR="#000080">;</FONT>
+  <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#008000">fp1_line</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">MAXLINE</FONT><FONT COLOR="#000080">],</FONT> <FONT COLOR="#008000">fp2_line</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">MAXLINE</FONT><FONT COLOR="#000080">];</FONT>
+  <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">;</FONT>
+
+  <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT> <FONT COLOR="#008000">argc</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#000000"><B>3</B></FONT> <FONT COLOR="#000080">)</FONT>
+    <FONT COLOR="#000080">{</FONT>
+      <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;differ fileone filetwo\n&quot;</FONT><FONT COLOR="#000080">);</FONT>
+      <FONT COLOR="#008000">exit</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">);</FONT>
+    <FONT COLOR="#000080">}</FONT>
+
+  <FONT COLOR="#008000">fp1</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">fopen</FONT><FONT COLOR="#000080">(</FONT> <FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">],</FONT> <FONT COLOR="#000000">&quot;r&quot;</FONT> <FONT COLOR="#000080">);</FONT>
+  <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT> <FONT COLOR="#000080">!</FONT> <FONT COLOR="#008000">fp1</FONT> <FONT COLOR="#000080">)</FONT>
+    <FONT COLOR="#000080">{</FONT>
+      <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;Error opening file %s\n&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">]);</FONT>
+    <FONT COLOR="#000080">}</FONT>
+
+  <FONT COLOR="#008000">fp2</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">fopen</FONT><FONT COLOR="#000080">(</FONT> <FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#000000"><B>2</B></FONT><FONT COLOR="#000080">],</FONT> <FONT COLOR="#000000">&quot;r&quot;</FONT> <FONT COLOR="#000080">);</FONT>
+  <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT> <FONT COLOR="#000080">!</FONT> <FONT COLOR="#008000">fp2</FONT> <FONT COLOR="#000080">)</FONT>
+    <FONT COLOR="#000080">{</FONT>
+      <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;Error opening file %s\n&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#000000"><B>2</B></FONT><FONT COLOR="#000080">]);</FONT>
+    <FONT COLOR="#000080">}</FONT>
+  <FONT COLOR="#008000">i</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+  <B><FONT COLOR="#000080">while</FONT></B> <FONT COLOR="#000080">(</FONT> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">fgets</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">fp1_line</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">MAXLINE</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">fp1</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">)</FONT> 
+	  <FONT COLOR="#000080">&amp;&amp;</FONT> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">fgets</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">fp2_line</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">MAXLINE</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">fp2</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">))</FONT>
+  <FONT COLOR="#000080">{</FONT>
+    <FONT COLOR="#008000">diff_line</FONT><FONT COLOR="#000080">(</FONT> <FONT COLOR="#008000">fp1_line</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">fp2_line</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">i</FONT> <FONT COLOR="#000080">);</FONT>
+    <FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">++;</FONT>
+  <FONT COLOR="#000080">}</FONT>
+
+  <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+
+
+
+</pre>
+</code>
+
+<br>
+<br>
+and here's &quot;flippant squirrel&quot;'s solution:
+<br>
+<br>
+<code>
+<pre>
+<FONT COLOR="#008080">/* Exercise 7-6 - write a program to compare two files, printing the first line
+ * where they differ
+ *
+ * Note : I amended this a bit...if a file is shorter than the other, but is identical
+ * up to that point, the program prints out &quot;EOF&quot; as the string that's not equal. 
+ * 
+ */</FONT>
+ 
+<FONT COLOR="#0000FF"><B>#include &lt;stdio.h&gt;</B></FONT>
+<FONT COLOR="#0000FF"><B>#include &lt;stdlib.h&gt;</B></FONT>
+<FONT COLOR="#0000FF"><B>#include &lt;string.h&gt;</B></FONT>
+
+<FONT COLOR="#0000FF"><B>#define BUFF_SIZE 1000</B></FONT>
+
+<FONT COLOR="#008080">/* uses fgets, removes the '\n' at the end of the string if it exists */</FONT>
+<B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">safegets</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">buffer</FONT><FONT COLOR="#000080">,</FONT> <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">length</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">FILE</FONT> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">file</FONT><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+        <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">ptr</FONT><FONT COLOR="#000080">;</FONT>
+        <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">len</FONT><FONT COLOR="#000080">;</FONT>
+        
+        <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">buffer</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">)</FONT>
+        <FONT COLOR="#000080">{</FONT>
+                <FONT COLOR="#008000">ptr</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">fgets</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">buffer</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">length</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">file</FONT><FONT COLOR="#000080">);</FONT>
+                
+                <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">ptr</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">)</FONT>
+                <FONT COLOR="#000080">{</FONT>
+                        <FONT COLOR="#008000">len</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">strlen</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">buffer</FONT><FONT COLOR="#000080">);</FONT>
+                
+                        <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">len</FONT> <FONT COLOR="#000080">&gt;</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">)</FONT>
+                        <FONT COLOR="#000080">{</FONT>
+                                <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">buffer</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">len</FONT> <FONT COLOR="#000080">-</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'\n'</B></FONT><FONT COLOR="#000080">)</FONT>
+                                <FONT COLOR="#000080">{</FONT>
+                                        <FONT COLOR="#008000">buffer</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">len</FONT> <FONT COLOR="#000080">-</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>'\0'</B></FONT><FONT COLOR="#000080">;</FONT>
+                                <FONT COLOR="#000080">}</FONT>
+                        <FONT COLOR="#000080">}</FONT>
+                <FONT COLOR="#000080">}</FONT>
+                
+                <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#008000">ptr</FONT><FONT COLOR="#000080">;</FONT>
+        <FONT COLOR="#000080">}</FONT>       
+        
+        <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">;</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">main</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">argc</FONT><FONT COLOR="#000080">,</FONT> <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">[])</FONT>
+<FONT COLOR="#000080">{</FONT>
+        <FONT COLOR="#008000">FILE</FONT> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">leftFile</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">rightFile</FONT><FONT COLOR="#000080">;</FONT>
+        <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#008000">buff1</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">BUFF_SIZE</FONT><FONT COLOR="#000080">],</FONT> <FONT COLOR="#008000">buff2</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">BUFF_SIZE</FONT><FONT COLOR="#000080">];</FONT>
+        <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">ptr1</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">ptr2</FONT><FONT COLOR="#000080">;</FONT>
+        <B><FONT COLOR="#000080">unsigned</FONT></B> <B><FONT COLOR="#000080">long</FONT></B> <FONT COLOR="#008000">lineNum</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+        
+        <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">argc</FONT> <FONT COLOR="#000080">&lt;</FONT> <FONT COLOR="#000000"><B>3</B></FONT><FONT COLOR="#000080">)</FONT>
+        <FONT COLOR="#000080">{</FONT>
+                <FONT COLOR="#008000">fprintf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">stderr</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000000">&quot;Usage : 7_6 &lt;path to file&gt; &lt;path to file&gt;\n&quot;</FONT><FONT COLOR="#000080">);</FONT>
+                <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+        <FONT COLOR="#000080">}</FONT>
+        
+        <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(!(</FONT><FONT COLOR="#008000">leftFile</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">fopen</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">],</FONT> <FONT COLOR="#000000">&quot;r&quot;</FONT><FONT COLOR="#000080">)))</FONT>
+        <FONT COLOR="#000080">{</FONT>
+                <FONT COLOR="#008000">fprintf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">stderr</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000000">&quot;Couldn't open %s for reading\n&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">]);</FONT>     
+                <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+        <FONT COLOR="#000080">}</FONT>
+        
+        <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(!(</FONT><FONT COLOR="#008000">rightFile</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">fopen</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#000000"><B>2</B></FONT><FONT COLOR="#000080">],</FONT> <FONT COLOR="#000000">&quot;r&quot;</FONT><FONT COLOR="#000080">)))</FONT>
+        <FONT COLOR="#000080">{</FONT>
+                <FONT COLOR="#008000">fprintf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">stderr</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000000">&quot;Couldn't open %s for reading\n&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#000000"><B>2</B></FONT><FONT COLOR="#000080">]);</FONT>
+                <FONT COLOR="#008000">fclose</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">leftFile</FONT><FONT COLOR="#000080">);</FONT> <FONT COLOR="#008080">/* RJH 10 Jul 2000 */</FONT>
+                <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+        <FONT COLOR="#000080">}</FONT>
+        
+        <FONT COLOR="#008080">/* read through each file, line by line */</FONT>
+        <FONT COLOR="#008000">ptr1</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">safegets</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">buff1</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">BUFF_SIZE</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">leftFile</FONT><FONT COLOR="#000080">);</FONT>
+        <FONT COLOR="#008000">ptr2</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">safegets</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">buff2</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">BUFF_SIZE</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">rightFile</FONT><FONT COLOR="#000080">);</FONT>
+        <FONT COLOR="#000080">++</FONT><FONT COLOR="#008000">lineNum</FONT><FONT COLOR="#000080">;</FONT>
+        
+        <FONT COLOR="#008080">/* stop when either we've exhausted either file's data */</FONT>
+        <B><FONT COLOR="#000080">while</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">ptr1</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#008000">NULL</FONT> <FONT COLOR="#000080">&amp;&amp;</FONT> <FONT COLOR="#008000">ptr2</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">)</FONT>
+        <FONT COLOR="#000080">{</FONT>
+                <FONT COLOR="#008080">/* compare the two lines */</FONT>
+                <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">strcmp</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">buff1</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">buff2</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">)</FONT>
+                <FONT COLOR="#000080">{</FONT>
+                        <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;Difference:\n&quot;</FONT><FONT COLOR="#000080">);</FONT>
+                        <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;%lu\t\&quot;%s\&quot; != \&quot;%s\&quot;\n&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">lineNum</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">buff1</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">buff2</FONT><FONT COLOR="#000080">);</FONT>
+                        <B><FONT COLOR="#000080">goto</FONT></B> <FONT COLOR="#008000">CleanUp</FONT><FONT COLOR="#000080">;</FONT>
+                <FONT COLOR="#000080">}</FONT>
+                
+                <FONT COLOR="#008000">ptr1</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">safegets</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">buff1</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">BUFF_SIZE</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">leftFile</FONT><FONT COLOR="#000080">);</FONT>
+                <FONT COLOR="#008000">ptr2</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">safegets</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">buff2</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">BUFF_SIZE</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">rightFile</FONT><FONT COLOR="#000080">);</FONT>
+                <FONT COLOR="#000080">++</FONT><FONT COLOR="#008000">lineNum</FONT><FONT COLOR="#000080">;</FONT>
+        <FONT COLOR="#000080">}</FONT>       
+
+        <FONT COLOR="#008080">/* 
+         * if one of the files ended prematurely, it definitely 
+         * isn't equivalent to the other 
+         */</FONT>
+        <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">ptr1</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#008000">NULL</FONT> <FONT COLOR="#000080">&amp;&amp;</FONT> <FONT COLOR="#008000">ptr2</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">)</FONT>
+        <FONT COLOR="#000080">{</FONT>
+                <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;Difference:\n&quot;</FONT><FONT COLOR="#000080">);</FONT>
+                <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;%lu\t\&quot;%s\&quot; != \&quot;EOF\&quot;\n&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">lineNum</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">buff1</FONT><FONT COLOR="#000080">);</FONT>
+        <FONT COLOR="#000080">}</FONT>       
+        <B><FONT COLOR="#000080">else</FONT></B> <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">ptr1</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#008000">NULL</FONT> <FONT COLOR="#000080">&amp;&amp;</FONT> <FONT COLOR="#008000">ptr2</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">)</FONT>
+        <FONT COLOR="#000080">{</FONT>
+                <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;Difference:\n&quot;</FONT><FONT COLOR="#000080">);</FONT>
+                <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;%lu\t\&quot;EOF\&quot; != \&quot;%s\&quot;\n&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">lineNum</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">buff2</FONT><FONT COLOR="#000080">);</FONT>
+        <FONT COLOR="#000080">}</FONT>
+        <B><FONT COLOR="#000080">else</FONT></B>
+        <FONT COLOR="#000080">{</FONT>
+                <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;No differences\n&quot;</FONT><FONT COLOR="#000080">);</FONT>
+        <FONT COLOR="#000080">}</FONT>
+
+<FONT COLOR="#008000">CleanUp</FONT><FONT COLOR="#000080">:</FONT>
+
+        <FONT COLOR="#008000">fclose</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">leftFile</FONT><FONT COLOR="#000080">);</FONT>
+        <FONT COLOR="#008000">fclose</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">rightFile</FONT><FONT COLOR="#000080">);</FONT>      
+        <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#008000">EXIT_SUCCESS</FONT><FONT COLOR="#000080">;</FONT>    
+<FONT COLOR="#000080">}</FONT>
+</pre>
+</code>
+
+<br>
+<br>
+
+<a href=index.html>  Back to index </a></body></html>

@@ -1,0 +1,115 @@
+<html>
+  <head>
+
+    <title>
+      The C Programming Language Exercise 2-2
+    </title>
+
+  <BODY    text="#000000"
+        bgcolor="#DDDDDD"
+           link="#800000"
+          alink="#008000"
+          vlink="#000080">
+
+
+<center>
+<h2>
+  &quot;The C Programming Language&quot;, 2nd edition, Kernighan and Ritchie
+</h2>
+<h3>
+  Answer to Exercise 2-2, page 42
+</h3>
+<h4>
+  Solutions by <a href=mailto:flippant_squirrel@yahoo.com>  &quot;Flippant Squirrel&quot; :-) </a> and
+  <a href=mailto:schroeder@santel.net>  Craig Schroeder </a>
+</h4>
+</center>
+
+<br>
+<br>
+Exercise 2-2 discusses a <code>for</code> loop from the text. Here it is:
+<br>
+<code>
+<pre>
+  <B><FONT COLOR="#000080">for</FONT></B><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">=</FONT><FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">&lt;</FONT><FONT COLOR="#008000">lim</FONT><FONT COLOR="#000080">-</FONT><FONT COLOR="#000000"><B>1</B></FONT> <FONT COLOR="#000080">&amp;&amp;</FONT> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">=</FONT><FONT COLOR="#008000">getchar</FONT><FONT COLOR="#000080">())</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#000000"><B>'\n'</B></FONT> <FONT COLOR="#000080">&amp;&amp;</FONT> <FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#008000">EOF</FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#000080">++</FONT><FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">)</FONT>
+    <FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">;</FONT>
+</pre>
+</code>
+
+<br>
+<br>
+
+<i>
+Write a loop equivalent to the <code>for</code> loop above without using <code>&amp;&amp;</code> or <code>||</code> .
+</i>
+<br>
+<br>
+
+<code>
+<pre>
+<FONT COLOR="#0000FF"><B>#include &lt;stdio.h&gt;</B></FONT>
+
+<FONT COLOR="#0000FF"><B>#define MAX_STRING_LENGTH 100</B></FONT>
+
+<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">main</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">void</FONT></B><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+	<FONT COLOR="#008080">/*
+	for (i = 0; i &lt; lim-1 &amp;&amp; (c=getchar()) != '\n' &amp;&amp; c != EOF; ++i)
+		s[i] = c;
+	*/</FONT>
+
+	<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">i</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">,</FONT>
+		<FONT COLOR="#008000">lim</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">MAX_STRING_LENGTH</FONT><FONT COLOR="#000080">,</FONT>
+		<FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">;</FONT>
+	<B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">MAX_STRING_LENGTH</FONT><FONT COLOR="#000080">];</FONT>
+
+	<B><FONT COLOR="#000080">while</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">i</FONT> <FONT COLOR="#000080">&lt;</FONT> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">lim</FONT> <FONT COLOR="#000080">-</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">))</FONT>
+	<FONT COLOR="#000080">{</FONT>
+		<FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">getchar</FONT><FONT COLOR="#000080">();</FONT>
+
+		<B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#008000">EOF</FONT><FONT COLOR="#000080">)</FONT>
+			<B><FONT COLOR="#000080">break</FONT></B><FONT COLOR="#000080">;</FONT>
+		<B><FONT COLOR="#000080">else</FONT></B> <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'\n'</B></FONT><FONT COLOR="#000080">)</FONT>
+			<B><FONT COLOR="#000080">break</FONT></B><FONT COLOR="#000080">;</FONT>
+
+		<FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">++]</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">;</FONT>
+	<FONT COLOR="#000080">}</FONT>
+
+	<FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>'\0'</B></FONT><FONT COLOR="#000080">;</FONT>   <FONT COLOR="#008080">/* terminate the string */</FONT>
+
+	<B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+<FONT COLOR="#000080">}</FONT></pre>
+</code>
+
+
+<br>
+<br>
+Here's a Category 1 solution from Craig Schroeder, which is not so much exegetic as - um - cute. :-)
+<br>
+<br>
+<code>
+<pre>
+<FONT COLOR="#0000FF"><B>#include &lt;stdio.h&gt;</B></FONT>
+
+<FONT COLOR="#0000FF"><B>#define lim 80</B></FONT>
+
+<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">main</FONT><FONT COLOR="#000080">()</FONT>
+<FONT COLOR="#000080">{</FONT>
+        <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">;</FONT>
+        <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">lim</FONT><FONT COLOR="#000080">];</FONT>
+
+        <FONT COLOR="#008080">/* There is a sequence point after the first operand of ?: */</FONT>
+
+        <B><FONT COLOR="#000080">for</FONT></B><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">=</FONT><FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">&lt;</FONT><FONT COLOR="#008000">lim</FONT><FONT COLOR="#000080">-</FONT><FONT COLOR="#000000"><B>1</B></FONT> <FONT COLOR="#000080">?</FONT> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">=</FONT><FONT COLOR="#008000">getchar</FONT><FONT COLOR="#000080">())</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#000000"><B>'\n'</B></FONT> <FONT COLOR="#000080">?</FONT> <FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#008000">EOF</FONT> <FONT COLOR="#000080">:</FONT> <FONT COLOR="#000000"><B>0</B></FONT> <FONT COLOR="#000080">:</FONT> <FONT COLOR="#000000"><B>0</B></FONT> <FONT COLOR="#000080">;</FONT> <FONT COLOR="#000080">++</FONT><FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">)</FONT>
+                <FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">;</FONT>
+        
+        <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">^=</FONT> <FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">];</FONT> <FONT COLOR="#008080">/* null terminate and return. */</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+</pre>
+</code>
+
+<br>
+<br>
+
+<a href=index.html>  Back to index </a></body></html>

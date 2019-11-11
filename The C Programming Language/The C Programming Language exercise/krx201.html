@@ -1,0 +1,70 @@
+<html>
+  <head>
+
+    <title>
+      The C Programming Language Exercise 2-1
+    </title>
+
+  <BODY    text="#000000"
+        bgcolor="#DDDDDD"
+           link="#800000"
+          alink="#008000"
+          vlink="#000080">
+
+
+<center>
+<h2>
+  &quot;The C Programming Language&quot;, 2nd edition, Kernighan and Ritchie
+</h2>
+<h3>
+  Answer to Exercise 2-1, page 36
+</h3>
+<h4>
+Category 0 Solution by <a href=mailto:rick@ricken.demon.co.uk>  Rick Dearman </a> - with corrections by Russ Bobbitt, marked /* RB */ and by Stefan Farfeleder, marked /* SF */
+</h4>
+</center>
+
+<i>
+Write a program to determine the ranges of <code>char</code> , <code>short</code> , <code>int</code> , and <code>long</code>
+variables, both <code>signed</code> and <code>unsigned</code> , by printing appropriate values from
+standard headers and by direct computation. Harder if you compute them: determine
+the ranges of the various floating-point types.
+</i>
+<br>
+<br>
+
+
+<br>
+<br>
+<code>
+<pre>
+<FONT COLOR="#0000FF"><B>#include &lt;stdio.h&gt;</B></FONT>
+<FONT COLOR="#0000FF"><B>#include &lt;limits.h&gt;</B></FONT>
+
+<B><FONT COLOR="#000080">int</FONT></B> 
+<FONT COLOR="#008000">main</FONT> <FONT COLOR="#000080">()</FONT>
+<FONT COLOR="#000080">{</FONT>
+  <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;Size of Char %d\n&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">CHAR_BIT</FONT><FONT COLOR="#000080">);</FONT>
+  <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;Size of Char Max %d\n&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">CHAR_MAX</FONT><FONT COLOR="#000080">);</FONT>
+  <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;Size of Char Min %d\n&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">CHAR_MIN</FONT><FONT COLOR="#000080">);</FONT>
+  <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;Size of int min %d\n&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">INT_MIN</FONT><FONT COLOR="#000080">);</FONT>
+  <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;Size of int max %d\n&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">INT_MAX</FONT><FONT COLOR="#000080">);</FONT>
+  <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;Size of long min %ld\n&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">LONG_MIN</FONT><FONT COLOR="#000080">);</FONT>       <FONT COLOR="#008080">/* RB */</FONT>
+  <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;Size of long max %ld\n&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">LONG_MAX</FONT><FONT COLOR="#000080">);</FONT>       <FONT COLOR="#008080">/* RB */</FONT>
+  <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;Size of short min %d\n&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">SHRT_MIN</FONT><FONT COLOR="#000080">);</FONT>
+  <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;Size of short max %d\n&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">SHRT_MAX</FONT><FONT COLOR="#000080">);</FONT>
+  <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;Size of unsigned char %u\n&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">UCHAR_MAX</FONT><FONT COLOR="#000080">);</FONT>  <FONT COLOR="#008080">/* SF */</FONT>
+  <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;Size of unsigned long %lu\n&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">ULONG_MAX</FONT><FONT COLOR="#000080">);</FONT> <FONT COLOR="#008080">/* RB */</FONT>
+  <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;Size of unsigned int %u\n&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">UINT_MAX</FONT><FONT COLOR="#000080">);</FONT>    <FONT COLOR="#008080">/* RB */</FONT>
+  <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;Size of unsigned short %u\n&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">USHRT_MAX</FONT><FONT COLOR="#000080">);</FONT> <FONT COLOR="#008080">/* SF */</FONT>
+
+  <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+<FONT COLOR="#000080">}</FONT>
+</pre>
+</code>
+
+<br>
+
+<br>
+
+<a href=index.html>  Back to index </a></body></html>

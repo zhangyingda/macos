@@ -1,0 +1,71 @@
+<html>
+  <head>
+
+    <title>
+      The C Programming Language Exercise 1-15
+    </title>
+
+  <BODY    text="#000000"
+        bgcolor="#DDDDDD"
+           link="#800000"
+          alink="#008000"
+          vlink="#000080">
+
+
+<center>
+<h2>
+  &quot;The C Programming Language&quot;, 2nd edition, Kernighan and Ritchie
+</h2>
+<h3>
+  Answer to Exercise 1-15, page 27
+</h3>
+<h4>
+  Solution by <a href=mailto:complangc@eton.powernet.co.uk>  Richard Heathfield </a>
+</h4>
+</center>
+
+<i>
+Rewrite the temperature conversion program of Section 1.2 to use a function for conversion.
+</i>
+<br>
+<br>
+
+<br>
+<code>
+<pre>
+<FONT COLOR="#0000FF"><B>#include &lt;stdio.h&gt;</B></FONT>
+
+<B><FONT COLOR="#000080">float</FONT></B> <FONT COLOR="#008000">FtoC</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">float</FONT></B> <FONT COLOR="#008000">f</FONT><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+  <B><FONT COLOR="#000080">float</FONT></B> <FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">;</FONT>
+  <FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000080">(</FONT><FONT COLOR="#000000"><B>5</B></FONT><FONT COLOR="#000000"><B>.0</B></FONT> <FONT COLOR="#000080">/</FONT> <FONT COLOR="#000000"><B>9</B></FONT><FONT COLOR="#000000"><B>.0</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">*</FONT> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">f</FONT> <FONT COLOR="#000080">-</FONT> <FONT COLOR="#000000"><B>32</B></FONT><FONT COLOR="#000000"><B>.0</B></FONT><FONT COLOR="#000080">);</FONT>
+  <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">;</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">main</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">void</FONT></B><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+  <B><FONT COLOR="#000080">float</FONT></B> <FONT COLOR="#008000">fahr</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">celsius</FONT><FONT COLOR="#000080">;</FONT>
+  <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">lower</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">upper</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">step</FONT><FONT COLOR="#000080">;</FONT>
+
+  <FONT COLOR="#008000">lower</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+  <FONT COLOR="#008000">upper</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>300</B></FONT><FONT COLOR="#000080">;</FONT>
+  <FONT COLOR="#008000">step</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>20</B></FONT><FONT COLOR="#000080">;</FONT>
+
+  <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;F     C\n\n&quot;</FONT><FONT COLOR="#000080">);</FONT>
+  <FONT COLOR="#008000">fahr</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">lower</FONT><FONT COLOR="#000080">;</FONT>
+  <B><FONT COLOR="#000080">while</FONT></B><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">fahr</FONT> <FONT COLOR="#000080">&lt;=</FONT> <FONT COLOR="#008000">upper</FONT><FONT COLOR="#000080">)</FONT>
+  <FONT COLOR="#000080">{</FONT>
+    <FONT COLOR="#008000">celsius</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">FtoC</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">fahr</FONT><FONT COLOR="#000080">);</FONT>
+    <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;%3.0f %6.1f\n&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">fahr</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">celsius</FONT><FONT COLOR="#000080">);</FONT>
+    <FONT COLOR="#008000">fahr</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">fahr</FONT> <FONT COLOR="#000080">+</FONT> <FONT COLOR="#008000">step</FONT><FONT COLOR="#000080">;</FONT>
+  <FONT COLOR="#000080">}</FONT>
+  <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+</pre>
+</code>
+
+
+<br>
+
+<a href=index.html>  Back to index </a></body></html>

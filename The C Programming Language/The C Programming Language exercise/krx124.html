@@ -1,0 +1,510 @@
+<html>
+  <head>
+
+    <title>
+      The C Programming Language Exercise 1-24
+    </title>
+
+  <BODY    text="#000000"
+        bgcolor="#DDDDDD"
+           link="#800000"
+          alink="#008000"
+          vlink="#000080">
+
+
+<center>
+<h2>
+  &quot;The C Programming Language&quot;, 2nd edition, Kernighan and Ritchie
+</h2>
+<h3>
+  Answer to Exercise 1-24, page 34
+</h3>
+<h4>
+Category 0 Solution by <a href=mailto:rick@ricken.demon.co.uk>  Rick Dearman </a>
+<br>
+Category 1 Solutions by <a href=mailto:e0026813@stud3.tuwien.ac.at>  Stefan Farfeleder </a>
+and <a href=mailto:stig@brautaset.org>  Stig Brautaset </a>
+</h4>
+</center>
+
+<i>
+Write a program to check a C program for rudimentary syntax errors like unbalanced parentheses,
+brackets and braces. Don't forget about quotes, both single and double, escape sequences, and
+comments. (This program is hard if you do it in full generality.)
+</i>
+<br>
+<br>
+
+Rick Dearman's Category 0 solution:
+<br>
+<br>
+<code>
+<pre>
+<FONT COLOR="#008080">/******************************************************
+   KnR 1-24
+   --------
+   Write a program to check the syntax of a C program
+   for matching {} () &quot;&quot; '' [] 
+
+   Author: Rick Dearman
+   email: rick@ricken.demon.co.uk
+
+******************************************************/</FONT>
+<FONT COLOR="#0000FF"><B>#include &lt;stdio.h&gt;</B></FONT>
+
+<FONT COLOR="#0000FF"><B>#define MAXLINE 1000 /* max input line size */</B></FONT>
+<B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#008000">line</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">MAXLINE</FONT><FONT COLOR="#000080">];</FONT> <FONT COLOR="#008080">/*current input line*/</FONT>
+
+<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">getline</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">void</FONT></B><FONT COLOR="#000080">);</FONT>  <FONT COLOR="#008080">/* taken from the KnR book. */</FONT>
+
+
+<B><FONT COLOR="#000080">int</FONT></B>
+<FONT COLOR="#008000">main</FONT><FONT COLOR="#000080">()</FONT>
+<FONT COLOR="#000080">{</FONT>
+  <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">len</FONT><FONT COLOR="#000080">=</FONT><FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+  <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">t</FONT><FONT COLOR="#000080">=</FONT><FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+  <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">brace</FONT><FONT COLOR="#000080">=</FONT><FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">bracket</FONT><FONT COLOR="#000080">=</FONT><FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">parenthesis</FONT><FONT COLOR="#000080">=</FONT><FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+  <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">s_quote</FONT><FONT COLOR="#000080">=</FONT><FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">d_quote</FONT><FONT COLOR="#000080">=</FONT><FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">;</FONT>
+
+
+  <B><FONT COLOR="#000080">while</FONT></B> <FONT COLOR="#000080">((</FONT><FONT COLOR="#008000">len</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">getline</FONT><FONT COLOR="#000080">())</FONT> <FONT COLOR="#000080">&gt;</FONT> <FONT COLOR="#000000"><B>0</B></FONT> <FONT COLOR="#000080">)</FONT>
+    <FONT COLOR="#000080">{</FONT>
+      <FONT COLOR="#008000">t</FONT><FONT COLOR="#000080">=</FONT><FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+      <B><FONT COLOR="#000080">while</FONT></B><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">t</FONT> <FONT COLOR="#000080">&lt;</FONT> <FONT COLOR="#008000">len</FONT><FONT COLOR="#000080">)</FONT>
+	<FONT COLOR="#000080">{</FONT>
+	  <B><FONT COLOR="#000080">if</FONT></B><FONT COLOR="#000080">(</FONT> <FONT COLOR="#008000">line</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">t</FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'['</B></FONT><FONT COLOR="#000080">)</FONT>
+	    <FONT COLOR="#000080">{</FONT>
+	      <FONT COLOR="#008000">brace</FONT><FONT COLOR="#000080">++;</FONT>
+	    <FONT COLOR="#000080">}</FONT>
+	  <B><FONT COLOR="#000080">if</FONT></B><FONT COLOR="#000080">(</FONT> <FONT COLOR="#008000">line</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">t</FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>']'</B></FONT><FONT COLOR="#000080">)</FONT>
+	    <FONT COLOR="#000080">{</FONT>
+	      <FONT COLOR="#008000">brace</FONT><FONT COLOR="#000080">--;</FONT>
+	    <FONT COLOR="#000080">}</FONT>
+	  <B><FONT COLOR="#000080">if</FONT></B><FONT COLOR="#000080">(</FONT> <FONT COLOR="#008000">line</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">t</FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'('</B></FONT><FONT COLOR="#000080">)</FONT>
+	    <FONT COLOR="#000080">{</FONT>
+	      <FONT COLOR="#008000">parenthesis</FONT><FONT COLOR="#000080">++;</FONT>
+	    <FONT COLOR="#000080">}</FONT>
+	  <B><FONT COLOR="#000080">if</FONT></B><FONT COLOR="#000080">(</FONT> <FONT COLOR="#008000">line</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">t</FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>')'</B></FONT><FONT COLOR="#000080">)</FONT>
+	    <FONT COLOR="#000080">{</FONT>
+	      <FONT COLOR="#008000">parenthesis</FONT><FONT COLOR="#000080">--;</FONT>
+	    <FONT COLOR="#000080">}</FONT>
+	  <B><FONT COLOR="#000080">if</FONT></B><FONT COLOR="#000080">(</FONT> <FONT COLOR="#008000">line</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">t</FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'\''</B></FONT><FONT COLOR="#000080">)</FONT>
+	    <FONT COLOR="#000080">{</FONT>
+	      <FONT COLOR="#008000">s_quote</FONT> <FONT COLOR="#000080">*=</FONT> <FONT COLOR="#000080">-</FONT><FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">;</FONT>
+	    <FONT COLOR="#000080">}</FONT>
+	  <B><FONT COLOR="#000080">if</FONT></B><FONT COLOR="#000080">(</FONT> <FONT COLOR="#008000">line</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">t</FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'&quot;'</B></FONT><FONT COLOR="#000080">)</FONT>
+	    <FONT COLOR="#000080">{</FONT>
+	      <FONT COLOR="#008000">d_quote</FONT> <FONT COLOR="#000080">*=</FONT> <FONT COLOR="#000080">-</FONT><FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">;</FONT>
+	    <FONT COLOR="#000080">}</FONT>
+	  <FONT COLOR="#008000">t</FONT><FONT COLOR="#000080">++;</FONT>
+	<FONT COLOR="#000080">}</FONT>
+    <FONT COLOR="#000080">}</FONT>
+  <B><FONT COLOR="#000080">if</FONT></B><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">d_quote</FONT> <FONT COLOR="#000080">!=</FONT><FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">)</FONT>
+    <FONT COLOR="#008000">printf</FONT> <FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;Mismatching double quote mark\n&quot;</FONT><FONT COLOR="#000080">);</FONT>
+  <B><FONT COLOR="#000080">if</FONT></B><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">s_quote</FONT> <FONT COLOR="#000080">!=</FONT><FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">)</FONT>
+    <FONT COLOR="#008000">printf</FONT> <FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;Mismatching single quote mark\n&quot;</FONT><FONT COLOR="#000080">);</FONT>
+  <B><FONT COLOR="#000080">if</FONT></B><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">parenthesis</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">)</FONT>
+    <FONT COLOR="#008000">printf</FONT> <FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;Mismatching parenthesis\n&quot;</FONT><FONT COLOR="#000080">);</FONT>
+  <B><FONT COLOR="#000080">if</FONT></B><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">brace</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">)</FONT>
+    <FONT COLOR="#008000">printf</FONT> <FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;Mismatching brace mark\n&quot;</FONT><FONT COLOR="#000080">);</FONT>
+  <B><FONT COLOR="#000080">if</FONT></B><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">bracket</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">)</FONT>
+    <FONT COLOR="#008000">printf</FONT> <FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;Mismatching bracket mark\n&quot;</FONT><FONT COLOR="#000080">);</FONT>
+  <B><FONT COLOR="#000080">if</FONT></B><FONT COLOR="#000080">(</FONT> <FONT COLOR="#008000">bracket</FONT><FONT COLOR="#000080">==</FONT><FONT COLOR="#000000"><B>0</B></FONT> <FONT COLOR="#000080">&amp;&amp;</FONT> <FONT COLOR="#008000">brace</FONT><FONT COLOR="#000080">==</FONT><FONT COLOR="#000000"><B>0</B></FONT> <FONT COLOR="#000080">&amp;&amp;</FONT> <FONT COLOR="#008000">parenthesis</FONT><FONT COLOR="#000080">==</FONT><FONT COLOR="#000000"><B>0</B></FONT> <FONT COLOR="#000080">&amp;&amp;</FONT> <FONT COLOR="#008000">s_quote</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>1</B></FONT> <FONT COLOR="#000080">&amp;&amp;</FONT> <FONT COLOR="#008000">d_quote</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">)</FONT>
+        <FONT COLOR="#008000">printf</FONT> <FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;Syntax appears to be correct.\n&quot;</FONT><FONT COLOR="#000080">);</FONT>
+  <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+
+<FONT COLOR="#008080">/* getline: specialized version */</FONT>
+<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">getline</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">void</FONT></B><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+  <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">;</FONT>
+  <B><FONT COLOR="#000080">extern</FONT></B> <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#008000">line</FONT><FONT COLOR="#000080">[];</FONT>
+  
+  <B><FONT COLOR="#000080">for</FONT></B> <FONT COLOR="#000080">(</FONT> <FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">=</FONT><FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT><FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">&lt;</FONT><FONT COLOR="#008000">MAXLINE</FONT><FONT COLOR="#000080">-</FONT><FONT COLOR="#000000"><B>1</B></FONT> <FONT COLOR="#000080">&amp;&amp;</FONT> <FONT COLOR="#000080">(</FONT> <FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">=</FONT><FONT COLOR="#008000">getchar</FONT><FONT COLOR="#000080">())</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#008000">EOF</FONT> <FONT COLOR="#000080">&amp;&amp;</FONT> <FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#000000"><B>'\n'</B></FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#000080">++</FONT><FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">)</FONT>
+    <FONT COLOR="#008000">line</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">;</FONT>
+  <B><FONT COLOR="#000080">if</FONT></B><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'\n'</B></FONT><FONT COLOR="#000080">)</FONT> 
+    <FONT COLOR="#000080">{</FONT>
+      <FONT COLOR="#008000">line</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">;</FONT>
+      <FONT COLOR="#000080">++</FONT><FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">;</FONT>
+    <FONT COLOR="#000080">}</FONT>
+  <FONT COLOR="#008000">line</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>'\0'</B></FONT><FONT COLOR="#000080">;</FONT>
+  <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">;</FONT>
+
+<FONT COLOR="#000080">}</FONT>
+</pre>
+</code>
+
+<br>
+Stefan Farfeleder's Category 1 solution:
+<br>
+<br>
+<code>
+<pre>
+<FONT COLOR="#008080">/* 1-24.c */</FONT>
+
+<FONT COLOR="#0000FF"><B>#include &lt;stdio.h&gt;</B></FONT>
+<FONT COLOR="#0000FF"><B>#include &lt;stdlib.h&gt;</B></FONT>
+
+<FONT COLOR="#0000FF"><B>#define MAX_STACK 1024</B></FONT>
+
+<B><FONT COLOR="#000080">enum</FONT></B>
+<FONT COLOR="#000080">{</FONT>
+    <FONT COLOR="#008000">CODE</FONT><FONT COLOR="#000080">,</FONT>       <FONT COLOR="#008080">/* nothing of the following */</FONT>
+    <FONT COLOR="#008000">COMMENT</FONT><FONT COLOR="#000080">,</FONT>    <FONT COLOR="#008080">/* inside a comment */</FONT>
+    <FONT COLOR="#008000">QUOTE1</FONT><FONT COLOR="#000080">,</FONT>     <FONT COLOR="#008080">/* inside '' */</FONT>
+    <FONT COLOR="#008000">QUOTE2</FONT>      <FONT COLOR="#008080">/* inside &quot;&quot; */</FONT>
+<FONT COLOR="#000080">};</FONT>
+
+<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">main</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">void</FONT></B><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+    <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">ch</FONT><FONT COLOR="#000080">;</FONT>
+    <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">state</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">CODE</FONT><FONT COLOR="#000080">;</FONT>
+    <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#008000">stack</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">MAX_STACK</FONT><FONT COLOR="#000080">];</FONT>
+    <FONT COLOR="#008000">size_t</FONT> <FONT COLOR="#008000">top</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008080">/* points to the top of the stack :-) */</FONT>
+    <FONT COLOR="#008000">size_t</FONT> <FONT COLOR="#008000">line</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">;</FONT>
+    <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">error</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>  <FONT COLOR="#008080">/* for ok-message */</FONT>
+
+    <B><FONT COLOR="#000080">while</FONT></B> <FONT COLOR="#000080">((</FONT><FONT COLOR="#008000">ch</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">getchar</FONT><FONT COLOR="#000080">())</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#008000">EOF</FONT><FONT COLOR="#000080">)</FONT>
+    <FONT COLOR="#000080">{</FONT>
+        <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">ch</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'\n'</B></FONT><FONT COLOR="#000080">)</FONT>
+        <FONT COLOR="#000080">{</FONT>
+            <FONT COLOR="#008000">line</FONT><FONT COLOR="#000080">++;</FONT>
+        <FONT COLOR="#000080">}</FONT>
+
+        <B><FONT COLOR="#000080">switch</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">state</FONT><FONT COLOR="#000080">)</FONT>
+        <FONT COLOR="#000080">{</FONT>
+        <B><FONT COLOR="#000080">case</FONT></B> <FONT COLOR="#008000">CODE</FONT><FONT COLOR="#000080">:</FONT>
+            <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">ch</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'\''</B></FONT><FONT COLOR="#000080">)</FONT>
+            <FONT COLOR="#000080">{</FONT>
+                <FONT COLOR="#008000">state</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">QUOTE1</FONT><FONT COLOR="#000080">;</FONT>
+            <FONT COLOR="#000080">}</FONT>
+            <B><FONT COLOR="#000080">else</FONT></B> <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">ch</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'&quot;'</B></FONT><FONT COLOR="#000080">)</FONT>
+            <FONT COLOR="#000080">{</FONT>
+                <FONT COLOR="#008000">state</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">QUOTE2</FONT><FONT COLOR="#000080">;</FONT>
+            <FONT COLOR="#000080">}</FONT>
+            <B><FONT COLOR="#000080">else</FONT></B> <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">ch</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'/'</B></FONT><FONT COLOR="#000080">)</FONT>
+            <FONT COLOR="#000080">{</FONT>
+                <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">second</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">getchar</FONT><FONT COLOR="#000080">();</FONT>
+
+                <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">second</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'*'</B></FONT><FONT COLOR="#000080">)</FONT>
+                <FONT COLOR="#000080">{</FONT>
+                    <FONT COLOR="#008000">state</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">COMMENT</FONT><FONT COLOR="#000080">;</FONT>
+                <FONT COLOR="#000080">}</FONT>
+                <B><FONT COLOR="#000080">else</FONT></B>
+                <FONT COLOR="#000080">{</FONT>
+                    <FONT COLOR="#008000">ungetc</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">second</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">stdin</FONT><FONT COLOR="#000080">);</FONT>
+                <FONT COLOR="#000080">}</FONT>
+            <FONT COLOR="#000080">}</FONT>
+            <B><FONT COLOR="#000080">else</FONT></B> <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">ch</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'('</B></FONT> <FONT COLOR="#000080">||</FONT> <FONT COLOR="#008000">ch</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'['</B></FONT> <FONT COLOR="#000080">||</FONT> <FONT COLOR="#008000">ch</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'{'</B></FONT><FONT COLOR="#000080">)</FONT>
+            <FONT COLOR="#000080">{</FONT>
+                <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">top</FONT> <FONT COLOR="#000080">&lt;</FONT> <FONT COLOR="#008000">MAX_STACK</FONT><FONT COLOR="#000080">)</FONT>
+                <FONT COLOR="#000080">{</FONT>
+                    <FONT COLOR="#008000">stack</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">top</FONT><FONT COLOR="#000080">++]</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">ch</FONT><FONT COLOR="#000080">;</FONT>
+                <FONT COLOR="#000080">}</FONT>
+                <B><FONT COLOR="#000080">else</FONT></B>
+                <FONT COLOR="#000080">{</FONT>
+                    <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;Stack too small!\n&quot;</FONT><FONT COLOR="#000080">);</FONT>
+                    <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#008000">EXIT_FAILURE</FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008080">/* exit gracefully :-) */</FONT>
+                <FONT COLOR="#000080">}</FONT>
+            <FONT COLOR="#000080">}</FONT>
+            <B><FONT COLOR="#000080">else</FONT></B> <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">ch</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>')'</B></FONT> <FONT COLOR="#000080">||</FONT> <FONT COLOR="#008000">ch</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>']'</B></FONT> <FONT COLOR="#000080">||</FONT> <FONT COLOR="#008000">ch</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'}'</B></FONT><FONT COLOR="#000080">)</FONT>
+            <FONT COLOR="#000080">{</FONT>
+                <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">top</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#008080">/* found closing brace but stack is empty */</FONT>
+                <FONT COLOR="#000080">{</FONT>
+                    <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;Line %lu: Closing '%c' found without &quot;</FONT>
+                           <FONT COLOR="#000000">&quot;counterpart.\n&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">unsigned</FONT></B> <B><FONT COLOR="#000080">long</FONT></B><FONT COLOR="#000080">)</FONT><FONT COLOR="#008000">line</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">ch</FONT><FONT COLOR="#000080">);</FONT>
+                    <FONT COLOR="#008000">error</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">;</FONT>
+                <FONT COLOR="#000080">}</FONT>
+                <B><FONT COLOR="#000080">else</FONT></B>
+                <FONT COLOR="#000080">{</FONT>
+                    <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#008000">open</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">stack</FONT><FONT COLOR="#000080">[--</FONT><FONT COLOR="#008000">top</FONT><FONT COLOR="#000080">];</FONT>
+
+                    <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">((</FONT><FONT COLOR="#008000">ch</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>')'</B></FONT> <FONT COLOR="#000080">&amp;&amp;</FONT> <FONT COLOR="#008000">open</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#000000"><B>'('</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">||</FONT>
+                        <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">ch</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>']'</B></FONT> <FONT COLOR="#000080">&amp;&amp;</FONT> <FONT COLOR="#008000">open</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#000000"><B>'['</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">||</FONT>
+                        <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">ch</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'}'</B></FONT> <FONT COLOR="#000080">&amp;&amp;</FONT> <FONT COLOR="#008000">open</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#000000"><B>'{'</B></FONT><FONT COLOR="#000080">))</FONT>
+                    <FONT COLOR="#000080">{</FONT>
+                        <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;Line %lu: Closing '%c' does not match &quot;</FONT>
+                             <FONT COLOR="#000000">&quot;opening '%c'.\n&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">unsigned</FONT></B> <B><FONT COLOR="#000080">long</FONT></B><FONT COLOR="#000080">)</FONT><FONT COLOR="#008000">line</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">ch</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">open</FONT><FONT COLOR="#000080">);</FONT>
+                        <FONT COLOR="#008000">error</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">;</FONT>
+                    <FONT COLOR="#000080">}</FONT>
+                <FONT COLOR="#000080">}</FONT>
+            <FONT COLOR="#000080">}</FONT>
+            <B><FONT COLOR="#000080">break</FONT></B><FONT COLOR="#000080">;</FONT>
+        <B><FONT COLOR="#000080">case</FONT></B> <FONT COLOR="#008000">COMMENT</FONT><FONT COLOR="#000080">:</FONT>
+            <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">ch</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'*'</B></FONT><FONT COLOR="#000080">)</FONT>
+            <FONT COLOR="#000080">{</FONT>
+                <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">second</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">getchar</FONT><FONT COLOR="#000080">();</FONT>
+
+                <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">second</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'/'</B></FONT><FONT COLOR="#000080">)</FONT>
+                <FONT COLOR="#000080">{</FONT>
+                    <FONT COLOR="#008000">state</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">CODE</FONT><FONT COLOR="#000080">;</FONT>
+                <FONT COLOR="#000080">}</FONT>
+                <B><FONT COLOR="#000080">else</FONT></B>
+                <FONT COLOR="#000080">{</FONT>
+                    <FONT COLOR="#008000">ungetc</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">second</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">stdin</FONT><FONT COLOR="#000080">);</FONT>
+                <FONT COLOR="#000080">}</FONT>
+            <FONT COLOR="#000080">}</FONT>
+            <B><FONT COLOR="#000080">break</FONT></B><FONT COLOR="#000080">;</FONT>
+        <B><FONT COLOR="#000080">case</FONT></B> <FONT COLOR="#008000">QUOTE1</FONT><FONT COLOR="#000080">:</FONT>
+            <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">ch</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'\\'</B></FONT><FONT COLOR="#000080">)</FONT>
+            <FONT COLOR="#000080">{</FONT>
+                <FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">void</FONT></B><FONT COLOR="#000080">)</FONT><FONT COLOR="#008000">getchar</FONT><FONT COLOR="#000080">();</FONT> <FONT COLOR="#008080">/* an escaped char inside '' throw it away */</FONT>
+            <FONT COLOR="#000080">}</FONT>
+            <B><FONT COLOR="#000080">else</FONT></B> <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">ch</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'\''</B></FONT><FONT COLOR="#000080">)</FONT>
+            <FONT COLOR="#000080">{</FONT>
+                <FONT COLOR="#008000">state</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">CODE</FONT><FONT COLOR="#000080">;</FONT>
+            <FONT COLOR="#000080">}</FONT>
+            <B><FONT COLOR="#000080">break</FONT></B><FONT COLOR="#000080">;</FONT>
+        <B><FONT COLOR="#000080">case</FONT></B> <FONT COLOR="#008000">QUOTE2</FONT><FONT COLOR="#000080">:</FONT>
+            <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">ch</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'\\'</B></FONT><FONT COLOR="#000080">)</FONT>
+            <FONT COLOR="#000080">{</FONT>
+                <FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">void</FONT></B><FONT COLOR="#000080">)</FONT><FONT COLOR="#008000">getchar</FONT><FONT COLOR="#000080">();</FONT> <FONT COLOR="#008080">/* an escaped char inside &quot;&quot; throw it away */</FONT>
+            <FONT COLOR="#000080">}</FONT>
+            <B><FONT COLOR="#000080">else</FONT></B> <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">ch</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'&quot;'</B></FONT><FONT COLOR="#000080">)</FONT>
+            <FONT COLOR="#000080">{</FONT>
+                <FONT COLOR="#008000">state</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">CODE</FONT><FONT COLOR="#000080">;</FONT>
+            <FONT COLOR="#000080">}</FONT>
+            <B><FONT COLOR="#000080">break</FONT></B><FONT COLOR="#000080">;</FONT>
+        <FONT COLOR="#000080">}</FONT>
+    <FONT COLOR="#000080">}</FONT>
+
+    <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">state</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#008000">COMMENT</FONT><FONT COLOR="#000080">)</FONT>
+    <FONT COLOR="#000080">{</FONT>
+        <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;Code ends inside comment!\n&quot;</FONT><FONT COLOR="#000080">);</FONT>
+    <FONT COLOR="#000080">}</FONT>
+    <B><FONT COLOR="#000080">else</FONT></B> <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">state</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#008000">QUOTE1</FONT><FONT COLOR="#000080">)</FONT>
+    <FONT COLOR="#000080">{</FONT>
+        <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;Code ends inside single quotes!\n&quot;</FONT><FONT COLOR="#000080">);</FONT>
+    <FONT COLOR="#000080">}</FONT>
+    <B><FONT COLOR="#000080">else</FONT></B> <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">state</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#008000">QUOTE2</FONT><FONT COLOR="#000080">)</FONT>
+    <FONT COLOR="#000080">{</FONT>
+        <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;Code ends inside double quotes!\n&quot;</FONT><FONT COLOR="#000080">);</FONT>
+    <FONT COLOR="#000080">}</FONT>
+    <B><FONT COLOR="#000080">else</FONT></B> <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">top</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>0</B></FONT> <FONT COLOR="#000080">&amp;&amp;</FONT> <FONT COLOR="#008000">error</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">)</FONT>
+    <FONT COLOR="#000080">{</FONT>
+        <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;Code seems to be ok.\n&quot;</FONT><FONT COLOR="#000080">);</FONT>
+    <FONT COLOR="#000080">}</FONT>
+    <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">top</FONT> <FONT COLOR="#000080">&gt;</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#008080">/* still something in the stack */</FONT>
+    <FONT COLOR="#000080">{</FONT>
+        <FONT COLOR="#008000">size_t</FONT> <FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">;</FONT>
+        <B><FONT COLOR="#000080">for</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">i</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008000">i</FONT> <FONT COLOR="#000080">&lt;</FONT> <FONT COLOR="#008000">top</FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">++)</FONT>
+        <FONT COLOR="#000080">{</FONT>
+            <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;Opening '%c' found without counterpart.\n&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">stack</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">]);</FONT>
+        <FONT COLOR="#000080">}</FONT>
+    <FONT COLOR="#000080">}</FONT>
+
+    <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+</pre>
+</code>
+
+<br>
+Stig Brautaset's Cat 1 solution:
+<br>
+<br>
+<code>
+<pre>
+<FONT COLOR="#008080">/* This is my first rudimentary C syntax checker. It checks for syntax errors, 
+ * like closing a set of brackets using the wrong type. It is not *very* good
+ * at it, but it does not bother about comments, and it does know something
+ * about escape sequences and character strings/constants.
+ *
+ * It uses a simple static stack to keep track of the braces, and it also uses
+ * a stack to keep track of the errors on each line. Someday I might change 
+ * that to use a queue for the error-tracking, because as it is now, it outputs
+ * the rightmost error on the line first, and then it steps leftwards (if there
+ * is more than one error on each line). 
+ *
+ * I might also implement my dynamically allocated stack and queue implementa-
+ * tions, so that running out of space in the stack is not an issue. I might
+ * also skip it, since it has little to do with the exercise in question.
+ *
+ * The program is especially bad at error-recovery. If it finds an error, (or
+ * something it believes to be an error) subsequent errors reported might be a 
+ * bit dubious.
+ */</FONT>
+
+<FONT COLOR="#0000FF"><B>#include &lt;stdio.h&gt;</B></FONT>
+
+<FONT COLOR="#0000FF"><B>#define MAXVAL 1000</B></FONT>
+<FONT COLOR="#0000FF"><B>#define MAXLINE 1000</B></FONT>
+
+<B><FONT COLOR="#000080">typedef</FONT></B> <B><FONT COLOR="#000080">struct</FONT></B> <FONT COLOR="#000080">{</FONT>
+	<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">top</FONT><FONT COLOR="#000080">;</FONT>
+	<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">val</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">MAXVAL</FONT><FONT COLOR="#000080">];</FONT>
+	<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">pos</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">MAXVAL</FONT><FONT COLOR="#000080">];</FONT>
+<FONT COLOR="#000080">}</FONT> <FONT COLOR="#008000">stackstr</FONT><FONT COLOR="#000080">;</FONT>
+
+<FONT COLOR="#008080">/* very simple stack push function */</FONT>
+<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">push</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">stackstr</FONT> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">stk</FONT><FONT COLOR="#000080">,</FONT> <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">foo</FONT><FONT COLOR="#000080">,</FONT> <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">bar</FONT><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT> 
+	<B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">stk</FONT><FONT COLOR="#000080">-&gt;</FONT><FONT COLOR="#008000">top</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#008000">MAXVAL</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+		<FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;stack overflow. NOT putting more values on the stack.\n&quot;</FONT><FONT COLOR="#000080">);</FONT>
+		<B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">;</FONT>
+	<FONT COLOR="#000080">}</FONT>
+	<FONT COLOR="#008000">stk</FONT><FONT COLOR="#000080">-&gt;</FONT><FONT COLOR="#008000">val</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">stk</FONT><FONT COLOR="#000080">-&gt;</FONT><FONT COLOR="#008000">top</FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">foo</FONT><FONT COLOR="#000080">;</FONT>
+	<FONT COLOR="#008000">stk</FONT><FONT COLOR="#000080">-&gt;</FONT><FONT COLOR="#008000">pos</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">stk</FONT><FONT COLOR="#000080">-&gt;</FONT><FONT COLOR="#008000">top</FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">bar</FONT><FONT COLOR="#000080">;</FONT>
+	<FONT COLOR="#008000">stk</FONT><FONT COLOR="#000080">-&gt;</FONT><FONT COLOR="#008000">top</FONT><FONT COLOR="#000080">++;</FONT>
+	
+	<B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+<FONT COLOR="#008080">/* very simple function to pop values off a stack */</FONT>
+<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">pop</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">stackstr</FONT> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">stk</FONT><FONT COLOR="#000080">,</FONT> <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">foo</FONT><FONT COLOR="#000080">,</FONT> <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">bar</FONT><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+	<B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">stk</FONT><FONT COLOR="#000080">-&gt;</FONT><FONT COLOR="#008000">top</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+		<B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">;</FONT>
+	<FONT COLOR="#000080">}</FONT>
+	<FONT COLOR="#008000">stk</FONT><FONT COLOR="#000080">-&gt;</FONT><FONT COLOR="#008000">top</FONT><FONT COLOR="#000080">--;</FONT>
+	<FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">foo</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">stk</FONT><FONT COLOR="#000080">-&gt;</FONT><FONT COLOR="#008000">val</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">stk</FONT><FONT COLOR="#000080">-&gt;</FONT><FONT COLOR="#008000">top</FONT><FONT COLOR="#000080">];</FONT>
+	<FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">bar</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">stk</FONT><FONT COLOR="#000080">-&gt;</FONT><FONT COLOR="#008000">pos</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">stk</FONT><FONT COLOR="#000080">-&gt;</FONT><FONT COLOR="#008000">top</FONT><FONT COLOR="#000080">];</FONT>
+	
+	<B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+<FONT COLOR="#008080">/* we go through the input one line at a time, and this function 
+ * gets the line to test 
+ */</FONT>
+<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">getline</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">,</FONT> <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">lim</FONT><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+	<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">;</FONT>
+
+	<B><FONT COLOR="#000080">for</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">i</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008000">i</FONT> <FONT COLOR="#000080">&lt;</FONT> <FONT COLOR="#008000">lim</FONT> <FONT COLOR="#000080">-</FONT> <FONT COLOR="#000000"><B>1</B></FONT> <FONT COLOR="#000080">&amp;&amp;</FONT> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">getchar</FONT><FONT COLOR="#000080">())</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#008000">EOF</FONT> <FONT COLOR="#000080">&amp;&amp;</FONT> <FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#000000"><B>'\n'</B></FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">++)</FONT>
+		<FONT COLOR="#000080">*(</FONT><FONT COLOR="#008000">s</FONT> <FONT COLOR="#000080">+</FONT> <FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">;</FONT>
+
+	<B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'\n'</B></FONT><FONT COLOR="#000080">)</FONT>
+		<FONT COLOR="#000080">*(</FONT><FONT COLOR="#008000">s</FONT> <FONT COLOR="#000080">+</FONT> <FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">++)</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">;</FONT>
+	<FONT COLOR="#000080">*(</FONT><FONT COLOR="#008000">s</FONT> <FONT COLOR="#000080">+</FONT> <FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>'\0'</B></FONT><FONT COLOR="#000080">;</FONT>
+
+	<B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">;</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+<B><FONT COLOR="#000080">void</FONT></B> <FONT COLOR="#008000">scanline</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">stackstr</FONT> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">stk</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">stackstr</FONT> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">errstk</FONT><FONT COLOR="#000080">,</FONT> <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">,</FONT> <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">len</FONT><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+	<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">d</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">foo</FONT><FONT COLOR="#000080">;</FONT>
+	<B><FONT COLOR="#000080">static</FONT></B> <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">string</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">comment</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">isconst</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">escape</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+	
+	<B><FONT COLOR="#000080">for</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">i</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008000">i</FONT> <FONT COLOR="#000080">&lt;</FONT> <FONT COLOR="#008000">len</FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">++)</FONT> <FONT COLOR="#000080">{</FONT>
+		<FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000080">*(</FONT><FONT COLOR="#008000">s</FONT> <FONT COLOR="#000080">+</FONT> <FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">);</FONT>
+		
+                <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(!</FONT><FONT COLOR="#008000">comment</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+			<B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'\\'</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT> <FONT COLOR="#008080">/* we have an escape */</FONT>
+				<FONT COLOR="#008080">/* test for a valid escape sequence */</FONT>
+				<B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">((</FONT><FONT COLOR="#008000">d</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000080">*(</FONT><FONT COLOR="#008000">s</FONT> <FONT COLOR="#000080">+</FONT> <FONT COLOR="#000080">++</FONT><FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">))</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'\\'</B></FONT> <FONT COLOR="#000080">||</FONT> <FONT COLOR="#008000">d</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'n'</B></FONT> <FONT COLOR="#000080">||</FONT> <FONT COLOR="#008000">d</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'0'</B></FONT> <FONT COLOR="#000080">||</FONT> <FONT COLOR="#008000">d</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'r'</B></FONT> <FONT COLOR="#000080">||</FONT> <FONT COLOR="#008000">d</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'?'</B></FONT>
+					<FONT COLOR="#000080">||</FONT> <FONT COLOR="#008000">d</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'t'</B></FONT> <FONT COLOR="#000080">||</FONT> <FONT COLOR="#008000">d</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'\''</B></FONT> <FONT COLOR="#000080">||</FONT> <FONT COLOR="#008000">d</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'\&quot;'</B></FONT> <FONT COLOR="#000080">||</FONT> <FONT COLOR="#008000">d</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'b'</B></FONT> <FONT COLOR="#000080">||</FONT> <FONT COLOR="#008000">d</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'x'</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+					<B><FONT COLOR="#000080">continue</FONT></B><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008080">/* ok, valid escape sequence -- don't bother about it */</FONT>
+				<FONT COLOR="#000080">}</FONT> <B><FONT COLOR="#000080">else</FONT></B> <FONT COLOR="#000080">{</FONT>
+					<FONT COLOR="#008000">push</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">errstk</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000000"><B>5</B></FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">);</FONT> <FONT COLOR="#008080">/* illigal escape sequence */</FONT>
+				<FONT COLOR="#000080">}</FONT>
+			<FONT COLOR="#000080">}</FONT> <B><FONT COLOR="#000080">else</FONT></B> <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'\&quot;'</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT> <FONT COLOR="#008080">/* is it a text string then? */</FONT>
+                        	<B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(!</FONT><FONT COLOR="#008000">string</FONT><FONT COLOR="#000080">)</FONT>
+					<FONT COLOR="#008000">string</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">;</FONT>
+				<B><FONT COLOR="#000080">else</FONT></B>
+					<FONT COLOR="#008000">string</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+			<FONT COLOR="#000080">}</FONT> <B><FONT COLOR="#000080">else</FONT></B> <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'\''</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT> <FONT COLOR="#008080">/* is it a constant? */</FONT>
+				<B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(!</FONT><FONT COLOR="#008000">isconst</FONT><FONT COLOR="#000080">)</FONT>
+					<FONT COLOR="#008000">isconst</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">;</FONT>
+				<B><FONT COLOR="#000080">else</FONT></B>
+					<FONT COLOR="#008000">isconst</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+			<FONT COLOR="#000080">}</FONT>
+		<FONT COLOR="#000080">}</FONT>
+		
+                <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(!</FONT><FONT COLOR="#008000">isconst</FONT> <FONT COLOR="#000080">&amp;&amp;</FONT> <FONT COLOR="#000080">!</FONT><FONT COLOR="#008000">string</FONT> <FONT COLOR="#000080">&amp;&amp;</FONT> <FONT COLOR="#000080">!</FONT><FONT COLOR="#008000">comment</FONT> <FONT COLOR="#000080">&amp;&amp;</FONT> <FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'/'</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+                        <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">((</FONT><FONT COLOR="#008000">d</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000080">*(</FONT><FONT COLOR="#008000">s</FONT> <FONT COLOR="#000080">+</FONT> <FONT COLOR="#000080">++</FONT><FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">))</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'*'</B></FONT><FONT COLOR="#000080">)</FONT>
+                                <FONT COLOR="#008000">comment</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">;</FONT>
+		<FONT COLOR="#000080">}</FONT> <B><FONT COLOR="#000080">else</FONT></B> <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">comment</FONT> <FONT COLOR="#000080">&amp;&amp;</FONT> <FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'*'</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+                        <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">((</FONT><FONT COLOR="#008000">d</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000080">*(</FONT><FONT COLOR="#008000">s</FONT> <FONT COLOR="#000080">+</FONT> <FONT COLOR="#000080">++</FONT><FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">))</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'/'</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+                                <FONT COLOR="#008000">comment</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+                		<B><FONT COLOR="#000080">continue</FONT></B><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008080">/* done with the comment stuff -- start over */</FONT>
+			<FONT COLOR="#000080">}</FONT>
+		<FONT COLOR="#000080">}</FONT>			                
+
+		<FONT COLOR="#008080">/* only bother about ({[ ]})'s that's not in
+		 * a string, constant or comment
+		 */</FONT>
+		<B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(!</FONT><FONT COLOR="#008000">isconst</FONT> <FONT COLOR="#000080">&amp;&amp;</FONT> <FONT COLOR="#000080">!</FONT><FONT COLOR="#008000">string</FONT> <FONT COLOR="#000080">&amp;&amp;</FONT> <FONT COLOR="#000080">!</FONT><FONT COLOR="#008000">comment</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+			<B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'('</B></FONT> <FONT COLOR="#000080">||</FONT> <FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'{'</B></FONT> <FONT COLOR="#000080">||</FONT> <FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'['</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+				<FONT COLOR="#008000">push</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">stk</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">);</FONT>
+			<FONT COLOR="#000080">}</FONT> <B><FONT COLOR="#000080">else</FONT></B> <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>']'</B></FONT> <FONT COLOR="#000080">||</FONT> <FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'}'</B></FONT> <FONT COLOR="#000080">||</FONT> <FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>')'</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+				<B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">pop</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">stk</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000080">&amp;</FONT><FONT COLOR="#008000">d</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000080">&amp;</FONT><FONT COLOR="#008000">foo</FONT><FONT COLOR="#000080">))</FONT> <FONT COLOR="#000080">{</FONT>
+					<FONT COLOR="#008000">push</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">errstk</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000000"><B>4</B></FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">);</FONT>
+				<FONT COLOR="#000080">}</FONT>
+				<B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>')'</B></FONT> <FONT COLOR="#000080">&amp;&amp;</FONT> <FONT COLOR="#008000">d</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#000000"><B>'('</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+					<FONT COLOR="#008000">push</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">stk</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">d</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">);</FONT>
+					<FONT COLOR="#008000">push</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">errstk</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">);</FONT>
+				<FONT COLOR="#000080">}</FONT> <B><FONT COLOR="#000080">else</FONT></B> <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>']'</B></FONT> <FONT COLOR="#000080">&amp;&amp;</FONT> <FONT COLOR="#008000">d</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#000000"><B>'['</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+					<FONT COLOR="#008000">push</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">stk</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">d</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">);</FONT>
+					<FONT COLOR="#008000">push</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">errstk</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000000"><B>2</B></FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">);</FONT>
+				<FONT COLOR="#000080">}</FONT> <B><FONT COLOR="#000080">else</FONT></B> <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'}'</B></FONT> <FONT COLOR="#000080">&amp;&amp;</FONT> <FONT COLOR="#008000">d</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#000000"><B>'{'</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+					<FONT COLOR="#008000">push</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">stk</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">d</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">);</FONT>
+					<FONT COLOR="#008000">push</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">errstk</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000000"><B>3</B></FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">);</FONT>
+				<FONT COLOR="#000080">}</FONT>
+			<FONT COLOR="#000080">}</FONT>
+		<FONT COLOR="#000080">}</FONT>
+	<FONT COLOR="#000080">}</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+
+<FONT COLOR="#008080">/* print errors on the line (if there were any) */</FONT>
+<B><FONT COLOR="#000080">void</FONT></B> <FONT COLOR="#008000">print_err</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">stackstr</FONT> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">errstk</FONT><FONT COLOR="#000080">,</FONT> <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">lineno</FONT><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+	<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">errno</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">pos</FONT><FONT COLOR="#000080">;</FONT>
+	
+	<FONT COLOR="#008080">/* yes I know... this way the errors come &quot;backwards&quot; :) */</FONT>
+	<B><FONT COLOR="#000080">while</FONT></B> <FONT COLOR="#000080">(!</FONT><FONT COLOR="#008000">pop</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">errstk</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000080">&amp;</FONT><FONT COLOR="#008000">errno</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000080">&amp;</FONT><FONT COLOR="#008000">pos</FONT><FONT COLOR="#000080">))</FONT> <FONT COLOR="#000080">{</FONT>
+		<FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;on line number %d: &quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">lineno</FONT><FONT COLOR="#000080">);</FONT>
+		<B><FONT COLOR="#000080">switch</FONT></B><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">errno</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+		<B><FONT COLOR="#000080">case</FONT></B> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">:</FONT>
+			<FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;closing unopened parantheses, column %d\n&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">pos</FONT><FONT COLOR="#000080">+</FONT><FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">);</FONT>
+			<B><FONT COLOR="#000080">break</FONT></B><FONT COLOR="#000080">;</FONT>
+		<B><FONT COLOR="#000080">case</FONT></B> <FONT COLOR="#000000"><B>2</B></FONT><FONT COLOR="#000080">:</FONT>
+			<FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;closing unopened square bracket, column %d\n&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">pos</FONT><FONT COLOR="#000080">+</FONT><FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">);</FONT>
+			<B><FONT COLOR="#000080">break</FONT></B><FONT COLOR="#000080">;</FONT>
+        	<B><FONT COLOR="#000080">case</FONT></B> <FONT COLOR="#000000"><B>3</B></FONT><FONT COLOR="#000080">:</FONT>
+			<FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;closing unopened curly braces, column %d\n&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">pos</FONT><FONT COLOR="#000080">+</FONT><FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">);</FONT>
+                	<B><FONT COLOR="#000080">break</FONT></B><FONT COLOR="#000080">;</FONT>
+		<B><FONT COLOR="#000080">case</FONT></B> <FONT COLOR="#000000"><B>4</B></FONT><FONT COLOR="#000080">:</FONT>
+			<FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;trying to close unopened block/control structure, column %d\n&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">pos</FONT><FONT COLOR="#000080">+</FONT><FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">);</FONT>
+			<B><FONT COLOR="#000080">break</FONT></B><FONT COLOR="#000080">;</FONT>
+        	<B><FONT COLOR="#000080">case</FONT></B> <FONT COLOR="#000000"><B>5</B></FONT><FONT COLOR="#000080">:</FONT>
+			<FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;illigal escape sequence, column %d\n&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">pos</FONT><FONT COLOR="#000080">+</FONT><FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">);</FONT>
+			<B><FONT COLOR="#000080">break</FONT></B><FONT COLOR="#000080">;</FONT>
+		<B><FONT COLOR="#000080">default</FONT></B><FONT COLOR="#000080">:</FONT>
+			<FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;undeterminable error\n&quot;</FONT><FONT COLOR="#000080">);</FONT>
+                <B><FONT COLOR="#000080">break</FONT></B><FONT COLOR="#000080">;</FONT>
+		<FONT COLOR="#000080">}</FONT>
+	<FONT COLOR="#000080">}</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">main</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">void</FONT></B><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+	<FONT COLOR="#008000">stackstr</FONT> <FONT COLOR="#008000">errstk</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000080">{</FONT><FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">},</FONT> <FONT COLOR="#008000">stk</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000080">{</FONT><FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">};</FONT>
+	<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">linenbr</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">errcount</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">linelen</FONT><FONT COLOR="#000080">;</FONT>
+	<B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#008000">line</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">MAXLINE</FONT><FONT COLOR="#000080">];</FONT>
+
+	<B><FONT COLOR="#000080">while</FONT></B> <FONT COLOR="#000080">((</FONT><FONT COLOR="#008000">linelen</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">getline</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">line</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">MAXLINE</FONT><FONT COLOR="#000080">))</FONT> <FONT COLOR="#000080">&gt;</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+		<FONT COLOR="#008000">linenbr</FONT><FONT COLOR="#000080">++;</FONT>
+		<FONT COLOR="#008000">scanline</FONT><FONT COLOR="#000080">(&amp;</FONT><FONT COLOR="#008000">stk</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000080">&amp;</FONT><FONT COLOR="#008000">errstk</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">line</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">linelen</FONT><FONT COLOR="#000080">);</FONT>
+		<B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">errstk</FONT><FONT COLOR="#000080">.</FONT><FONT COLOR="#008000">top</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+			<FONT COLOR="#008000">print_err</FONT><FONT COLOR="#000080">(&amp;</FONT><FONT COLOR="#008000">errstk</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">linenbr</FONT><FONT COLOR="#000080">);</FONT>
+			<FONT COLOR="#008000">errcount</FONT><FONT COLOR="#000080">++;</FONT>
+		<FONT COLOR="#000080">}</FONT>
+	<FONT COLOR="#000080">}</FONT>
+
+	<B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">errcount</FONT><FONT COLOR="#000080">)</FONT> 
+		<FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;%d lines contained error(s)\n&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">errcount</FONT><FONT COLOR="#000080">);</FONT>
+	<B><FONT COLOR="#000080">else</FONT></B>
+		<FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;Well, *I* didn't find any syntax errors, but don't take my word for it...:)\n&quot;</FONT><FONT COLOR="#000080">);</FONT>
+			
+	<B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+
+</pre>
+</code>
+
+<br>
+
+<a href=index.html>  Back to index </a></body></html>

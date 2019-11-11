@@ -1,0 +1,65 @@
+<html>
+  <head>
+
+    <title>
+      The C Programming Language Exercise 2-7
+    </title>
+
+  <BODY    text="#000000"
+        bgcolor="#DDDDDD"
+           link="#800000"
+          alink="#008000"
+          vlink="#000080">
+
+
+<center>
+<h2>
+  &quot;The C Programming Language&quot;, 2nd edition, Kernighan and Ritchie
+</h2>
+<h3>
+  Answer to Exercise 2-7, page 49
+</h3>
+<h4>
+  Solution by <a href=mailto:gkp1@flash.net>  Gregory Pietsch </a>
+</h4>
+</center>
+
+<i>
+Write a function <code>invert(x,p,n)</code> that returns <code>x</code> with the <code>n</code> bits that begin at
+position <code>p</code> inverted (i.e., 1 changed into 0 and vice versa), leaving the others unchanged.
+</i>
+<br>
+<br>
+
+<br>
+<br>
+<code>
+<pre>
+<B><FONT COLOR="#000080">unsigned</FONT></B> <FONT COLOR="#008000">invert</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">unsigned</FONT></B> <FONT COLOR="#008000">x</FONT><FONT COLOR="#000080">,</FONT> <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">p</FONT><FONT COLOR="#000080">,</FONT> <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">n</FONT><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+    <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#008000">x</FONT> <FONT COLOR="#000080">^</FONT> <FONT COLOR="#000080">(~(~</FONT><FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#008000">U</FONT> <FONT COLOR="#000080">&lt;&lt;</FONT> <FONT COLOR="#008000">n</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">&lt;&lt;</FONT> <FONT COLOR="#008000">p</FONT><FONT COLOR="#000080">);</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+<FONT COLOR="#008080">/* main driver added, in a hurry while tired, by RJH. Better test driver suggestions are welcomed! */</FONT>
+
+<FONT COLOR="#0000FF"><B>#include &lt;stdio.h&gt;</B></FONT>
+
+<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">main</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">void</FONT></B><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+  <B><FONT COLOR="#000080">unsigned</FONT></B> <FONT COLOR="#008000">x</FONT><FONT COLOR="#000080">;</FONT>
+  <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">p</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">n</FONT><FONT COLOR="#000080">;</FONT>
+
+  <B><FONT COLOR="#000080">for</FONT></B><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">x</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008000">x</FONT> <FONT COLOR="#000080">&lt;</FONT> <FONT COLOR="#000000"><B>700</B></FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008000">x</FONT> <FONT COLOR="#000080">+=</FONT> <FONT COLOR="#000000"><B>49</B></FONT><FONT COLOR="#000080">)</FONT>
+    <B><FONT COLOR="#000080">for</FONT></B><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">n</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008000">n</FONT> <FONT COLOR="#000080">&lt;</FONT> <FONT COLOR="#000000"><B>8</B></FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008000">n</FONT><FONT COLOR="#000080">++)</FONT>
+      <B><FONT COLOR="#000080">for</FONT></B><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">p</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008000">p</FONT> <FONT COLOR="#000080">&lt;</FONT> <FONT COLOR="#000000"><B>8</B></FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008000">p</FONT><FONT COLOR="#000080">++)</FONT>
+        <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;%u, %d, %d: %u\n&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">x</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">n</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">p</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">invert</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">x</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">n</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">p</FONT><FONT COLOR="#000080">));</FONT>
+  <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+<FONT COLOR="#000080">}</FONT>
+</pre>
+</code>
+
+
+<br>
+<br>
+
+<a href=index.html>  Back to index </a></body></html>

@@ -1,0 +1,111 @@
+<html>
+  <head>
+
+    <title>
+      The C Programming Language Exercise 8-6
+    </title>
+
+  <BODY    text="#000000"
+        bgcolor="#DDDDDD"
+           link="#800000"
+          alink="#008000"
+          vlink="#000080">
+
+
+<center>
+<h2>
+  &quot;The C Programming Language&quot;, 2nd edition, Kernighan and Ritchie
+</h2>
+<h3>
+  Answer to Exercise 8-6, page 189
+</h3>
+<h4>
+  Solution by <a href=mailto:gfd34@dial.pipex.com>  Bryan Williams </a>
+</h4>
+</center>
+
+<i>
+The standard library function <code>calloc(n,size)</code> returns a pointer to <code>n</code> objects
+of size <code>size</code> , with the storage initialized to zero. Write <code>calloc</code> , by
+calling <code>malloc</code> or by modifying it.
+</i>
+<br>
+<br>
+
+<code>
+<pre>
+<FONT COLOR="#008080">/*
+    Exercise 8.6. The standard library function calloc(n, size) returns a pointer to n objects
+		  of size size, with the storage initialised to zero. Write calloc, by calling 
+		  malloc or by modifying it.
+
+    Author: Bryan Williams
+
+*/</FONT>
+
+<FONT COLOR="#0000FF"><B>#include &lt;stdlib.h&gt;</B></FONT>
+<FONT COLOR="#0000FF"><B>#include &lt;string.h&gt;</B></FONT>
+
+<FONT COLOR="#008080">/*
+  Decided to re-use malloc for this because :
+	1) If the implementation of malloc and the memory management layer changes, this will be ok.
+	2) Code re-use is great.
+
+*/</FONT>
+<B><FONT COLOR="#000080">void</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">mycalloc</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">size_t</FONT> <FONT COLOR="#008000">nmemb</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">size_t</FONT> <FONT COLOR="#008000">size</FONT><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+  <B><FONT COLOR="#000080">void</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">Result</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">;</FONT>
+
+  <FONT COLOR="#008080">/* use malloc to get the memory */</FONT>
+  <FONT COLOR="#008000">Result</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">malloc</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">nmemb</FONT> <FONT COLOR="#000080">*</FONT> <FONT COLOR="#008000">size</FONT><FONT COLOR="#000080">);</FONT>
+
+  <FONT COLOR="#008080">/* and clear the memory on successful allocation */</FONT>
+  <B><FONT COLOR="#000080">if</FONT></B><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">NULL</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#008000">Result</FONT><FONT COLOR="#000080">)</FONT>
+  <FONT COLOR="#000080">{</FONT>
+    <FONT COLOR="#008000">memset</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">Result</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000000"><B>0x00</B></FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">nmemb</FONT> <FONT COLOR="#000080">*</FONT> <FONT COLOR="#008000">size</FONT><FONT COLOR="#000080">);</FONT>
+  <FONT COLOR="#000080">}</FONT>
+
+  <FONT COLOR="#008080">/* and return the result */</FONT>
+  <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#008000">Result</FONT><FONT COLOR="#000080">;</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+<FONT COLOR="#008080">/* simple test driver, by RJH */</FONT>
+
+<FONT COLOR="#0000FF"><B>#include &lt;stdio.h&gt;</B></FONT>
+
+<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">main</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">void</FONT></B><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+  <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">p</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">;</FONT>
+  <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">i</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+
+  <FONT COLOR="#008000">p</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">mycalloc</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000"><B>100</B></FONT><FONT COLOR="#000080">,</FONT> <B><FONT COLOR="#000080">sizeof</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">p</FONT><FONT COLOR="#000080">);</FONT>
+  <B><FONT COLOR="#000080">if</FONT></B><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">NULL</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#008000">p</FONT><FONT COLOR="#000080">)</FONT>
+  <FONT COLOR="#000080">{</FONT>
+    <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;mycalloc returned NULL.\n&quot;</FONT><FONT COLOR="#000080">);</FONT>
+  <FONT COLOR="#000080">}</FONT>
+  <B><FONT COLOR="#000080">else</FONT></B>
+  <FONT COLOR="#000080">{</FONT>
+    <B><FONT COLOR="#000080">for</FONT></B><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">i</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008000">i</FONT> <FONT COLOR="#000080">&lt;</FONT> <FONT COLOR="#000000"><B>100</B></FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">++)</FONT>
+    <FONT COLOR="#000080">{</FONT>
+      <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;%08X &quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">p</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">]);</FONT>
+      <B><FONT COLOR="#000080">if</FONT></B><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">i</FONT> <FONT COLOR="#000080">%</FONT> <FONT COLOR="#000000"><B>8</B></FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>7</B></FONT><FONT COLOR="#000080">)</FONT>
+      <FONT COLOR="#000080">{</FONT>
+	<FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;\n&quot;</FONT><FONT COLOR="#000080">);</FONT>
+      <FONT COLOR="#000080">}</FONT>
+    <FONT COLOR="#000080">}</FONT>
+    <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;\n&quot;</FONT><FONT COLOR="#000080">);</FONT>
+    <FONT COLOR="#008000">free</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">p</FONT><FONT COLOR="#000080">);</FONT>
+  <FONT COLOR="#000080">}</FONT>
+
+  <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+
+</pre>
+</code>
+
+
+<br>
+<br>
+
+<a href=index.html>  Back to index </a></body></html>

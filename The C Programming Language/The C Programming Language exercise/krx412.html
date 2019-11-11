@@ -1,0 +1,118 @@
+<html>
+  <head>
+
+    <title>
+      The C Programming Language Exercise 4-12
+    </title>
+
+  <BODY    text="#000000"
+        bgcolor="#DDDDDD"
+           link="#800000"
+          alink="#008000"
+          vlink="#000080">
+
+
+<center>
+<h2>
+  &quot;The C Programming Language&quot;, 2nd edition, Kernighan and Ritchie
+</h2>
+<h3>
+  Answer to Exercise 4-12, page 88 
+</h3>
+<h4>
+  Solution by <a href=mailto:gkp1@flash.net>  Gregory Pietsch </a>
+</h4>
+</center>
+
+<i>
+Adapt the ideas of <code>printd</code> to write a recursive version of <code>atoi</code> ; that is,
+convert an integer into a string by calling a recursive routine.
+</i>
+<br>
+<br>
+<code>
+<pre>
+<FONT COLOR="#008080">/* 
+
+itoa() is non-standard, but defined on p.64 as having this prototype:
+
+void itoa(int n, char s[])
+
+Instead of this, I thought I'd use a different prototype (one I got from
+the library manual of one of my compilers) since it includes all of the
+above:
+
+char *itoa(int value, char *digits, int base);
+
+Description:  The itoa() function converts an integer value into an
+ASCII string of digits.  The base argument specifies the number base for
+the conversion.  The base must be a value in the range [2..36], where 2
+is binary, 8 is octal, 10 is decimal, and 16 is hexadecimal.  The buffer
+pointed to by digits must be large enough to hold the ASCII string of
+digits plus a terminating null character.  The maximum amount of buffer
+space used is the precision of an int in bits + 2 (one for the sign and
+one for the terminating null). 
+
+Returns:  digits, or NULL if error.
+
+*/</FONT>
+
+<FONT COLOR="#0000FF"><B>#include &lt;stdlib.h&gt;</B></FONT>
+
+<B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">utoa</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">unsigned</FONT></B> <FONT COLOR="#008000">value</FONT><FONT COLOR="#000080">,</FONT> <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">digits</FONT><FONT COLOR="#000080">,</FONT> <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">base</FONT><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+    <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">p</FONT><FONT COLOR="#000080">;</FONT>
+
+    <FONT COLOR="#008000">s</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000">&quot;0123456789abcdefghijklmnopqrstuvwxyz&quot;</FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008080">/* don't care if s is in
+                                                 * read-only memory
+                                                 */</FONT>
+    <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">base</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">)</FONT>
+        <FONT COLOR="#008000">base</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>10</B></FONT><FONT COLOR="#000080">;</FONT>
+    <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">digits</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#008000">NULL</FONT> <FONT COLOR="#000080">||</FONT> <FONT COLOR="#008000">base</FONT> <FONT COLOR="#000080">&lt;</FONT> <FONT COLOR="#000000"><B>2</B></FONT> <FONT COLOR="#000080">||</FONT> <FONT COLOR="#008000">base</FONT> <FONT COLOR="#000080">&gt;</FONT> <FONT COLOR="#000000"><B>36</B></FONT><FONT COLOR="#000080">)</FONT>
+        <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">;</FONT>
+    <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">value</FONT> <FONT COLOR="#000080">&lt;</FONT> <FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">unsigned</FONT></B><FONT COLOR="#000080">)</FONT> <FONT COLOR="#008000">base</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+        <FONT COLOR="#008000">digits</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">value</FONT><FONT COLOR="#000080">];</FONT>
+        <FONT COLOR="#008000">digits</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>'\0'</B></FONT><FONT COLOR="#000080">;</FONT>
+    <FONT COLOR="#000080">}</FONT> <B><FONT COLOR="#000080">else</FONT></B> <FONT COLOR="#000080">{</FONT>
+        <B><FONT COLOR="#000080">for</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">p</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">utoa</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">value</FONT> <FONT COLOR="#000080">/</FONT> <FONT COLOR="#000080">((</FONT><B><FONT COLOR="#000080">unsigned</FONT></B><FONT COLOR="#000080">)</FONT><FONT COLOR="#008000">base</FONT><FONT COLOR="#000080">),</FONT> <FONT COLOR="#008000">digits</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">base</FONT><FONT COLOR="#000080">);</FONT>
+             <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">p</FONT><FONT COLOR="#000080">;</FONT>
+             <FONT COLOR="#008000">p</FONT><FONT COLOR="#000080">++);</FONT>
+        <FONT COLOR="#008000">utoa</FONT><FONT COLOR="#000080">(</FONT> <FONT COLOR="#008000">value</FONT> <FONT COLOR="#000080">%</FONT> <FONT COLOR="#000080">((</FONT><B><FONT COLOR="#000080">unsigned</FONT></B><FONT COLOR="#000080">)</FONT><FONT COLOR="#008000">base</FONT><FONT COLOR="#000080">),</FONT> <FONT COLOR="#008000">p</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">base</FONT><FONT COLOR="#000080">);</FONT>
+    <FONT COLOR="#000080">}</FONT>
+    <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#008000">digits</FONT><FONT COLOR="#000080">;</FONT>
+<FONT COLOR="#000080">}</FONT>   
+
+<B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">itoa</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">value</FONT><FONT COLOR="#000080">,</FONT> <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">digits</FONT><FONT COLOR="#000080">,</FONT> <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">base</FONT><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+    <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">d</FONT><FONT COLOR="#000080">;</FONT>
+    <B><FONT COLOR="#000080">unsigned</FONT></B> <FONT COLOR="#008000">u</FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008080">/* assume unsigned is big enough to hold all the
+                 * unsigned values -x could possibly be -- don't
+                 * know how well this assumption holds on the
+                 * DeathStation 9000, so beware of nasal demons
+                 */</FONT>
+
+    <FONT COLOR="#008000">d</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">digits</FONT><FONT COLOR="#000080">;</FONT>
+    <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">base</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">)</FONT>
+        <FONT COLOR="#008000">base</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>10</B></FONT><FONT COLOR="#000080">;</FONT>
+    <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">digits</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#008000">NULL</FONT> <FONT COLOR="#000080">||</FONT> <FONT COLOR="#008000">base</FONT> <FONT COLOR="#000080">&lt;</FONT> <FONT COLOR="#000000"><B>2</B></FONT> <FONT COLOR="#000080">||</FONT> <FONT COLOR="#008000">base</FONT> <FONT COLOR="#000080">&gt;</FONT> <FONT COLOR="#000000"><B>36</B></FONT><FONT COLOR="#000080">)</FONT>
+        <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">;</FONT>
+    <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">value</FONT> <FONT COLOR="#000080">&lt;</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+        <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">d</FONT><FONT COLOR="#000080">++</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>'-'</B></FONT><FONT COLOR="#000080">;</FONT>
+        <FONT COLOR="#008000">u</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000080">-</FONT><FONT COLOR="#008000">value</FONT><FONT COLOR="#000080">;</FONT>
+    <FONT COLOR="#000080">}</FONT> <B><FONT COLOR="#000080">else</FONT></B>
+        <FONT COLOR="#008000">u</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">value</FONT><FONT COLOR="#000080">;</FONT>
+    <FONT COLOR="#008000">utoa</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">u</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">d</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">base</FONT><FONT COLOR="#000080">);</FONT>
+    <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#008000">digits</FONT><FONT COLOR="#000080">;</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+
+
+</pre>
+</code>
+
+<br>
+<br>
+<br>
+<br>
+
+<a href=index.html>  Back to index </a></body></html>

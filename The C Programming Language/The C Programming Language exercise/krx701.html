@@ -1,0 +1,187 @@
+<html>
+  <head>
+
+    <title>
+      The C Programming Language Exercise 7-1
+    </title>
+
+  <BODY    text="#000000"
+        bgcolor="#DDDDDD"
+           link="#800000"
+          alink="#008000"
+          vlink="#000080">
+
+
+<center>
+<h2>
+  &quot;The C Programming Language&quot;, 2nd edition, Kernighan and Ritchie
+</h2>
+<h3>
+  Answer to Exercise 7-1, page 153
+</h3>
+<h4>
+Solution by <a href=mailto:complangc@eton.powernet.co.uk>  Richard Heathfield </a>
+</h4>
+</center>
+
+<i>
+Write a program that converts upper case to lower or lower case to
+upper, depending on the name it is invoked with, as found in <code>argv[0].</code>
+</i>
+<br>
+<br>
+
+
+<br>
+<br>
+<br>
+<br>
+<code>
+<pre>
+<FONT COLOR="#008080">/* This program converts its input to upper case
+ * (if argv[0] begins with U or u) or lower case.
+ * If argc is 0, it prints an error and quits.
+ */</FONT>
+
+<FONT COLOR="#0000FF"><B>#include &lt;stdio.h&gt;</B></FONT>
+<FONT COLOR="#0000FF"><B>#include &lt;stdlib.h&gt;</B></FONT>
+<FONT COLOR="#0000FF"><B>#include &lt;ctype.h&gt;</B></FONT>
+
+
+<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">main</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">argc</FONT><FONT COLOR="#000080">,</FONT> <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">**</FONT><FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+  <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#000080">(*</FONT><FONT COLOR="#008000">convcase</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#000000"><B>2</B></FONT><FONT COLOR="#000080">])(</FONT><B><FONT COLOR="#000080">int</FONT></B><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000080">{</FONT><FONT COLOR="#008000">toupper</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">tolower</FONT><FONT COLOR="#000080">};</FONT>
+  <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">func</FONT><FONT COLOR="#000080">;</FONT>
+  <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">result</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">EXIT_SUCCESS</FONT><FONT COLOR="#000080">;</FONT>
+
+  <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">ch</FONT><FONT COLOR="#000080">;</FONT>
+
+  <B><FONT COLOR="#000080">if</FONT></B><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">argc</FONT> <FONT COLOR="#000080">&gt;</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">)</FONT>
+  <FONT COLOR="#000080">{</FONT>
+    <B><FONT COLOR="#000080">if</FONT></B><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">toupper</FONT><FONT COLOR="#000080">((</FONT><B><FONT COLOR="#000080">unsigned</FONT></B> <B><FONT COLOR="#000080">char</FONT></B><FONT COLOR="#000080">)</FONT><FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">][</FONT><FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">])</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'U'</B></FONT><FONT COLOR="#000080">)</FONT>
+    <FONT COLOR="#000080">{</FONT>
+      <FONT COLOR="#008000">func</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+    <FONT COLOR="#000080">}</FONT>
+    <B><FONT COLOR="#000080">else</FONT></B>
+    <FONT COLOR="#000080">{</FONT>
+      <FONT COLOR="#008000">func</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">;</FONT>
+    <FONT COLOR="#000080">}</FONT>
+
+    <B><FONT COLOR="#000080">while</FONT></B><FONT COLOR="#000080">((</FONT><FONT COLOR="#008000">ch</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">getchar</FONT><FONT COLOR="#000080">())</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#008000">EOF</FONT><FONT COLOR="#000080">)</FONT>
+    <FONT COLOR="#000080">{</FONT>
+      <FONT COLOR="#008000">ch</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000080">(*</FONT><FONT COLOR="#008000">convcase</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">func</FONT><FONT COLOR="#000080">])((</FONT><B><FONT COLOR="#000080">unsigned</FONT></B> <B><FONT COLOR="#000080">char</FONT></B><FONT COLOR="#000080">)</FONT><FONT COLOR="#008000">ch</FONT><FONT COLOR="#000080">);</FONT>
+      <FONT COLOR="#008000">putchar</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">ch</FONT><FONT COLOR="#000080">);</FONT>
+    <FONT COLOR="#000080">}</FONT>
+  <FONT COLOR="#000080">}</FONT>
+  <B><FONT COLOR="#000080">else</FONT></B>
+  <FONT COLOR="#000080">{</FONT>
+    <FONT COLOR="#008000">fprintf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">stderr</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000000">&quot;Unknown name. Can't decide what to do.\n&quot;</FONT><FONT COLOR="#000080">);</FONT>
+    <FONT COLOR="#008000">result</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">EXIT_FAILURE</FONT><FONT COLOR="#000080">;</FONT>
+  <FONT COLOR="#000080">}</FONT>
+
+  <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#008000">result</FONT><FONT COLOR="#000080">;</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+</pre>
+</code>
+
+<br>
+<br>
+<br>
+<br>
+Here's a category 1 solution from Bryan Williams...
+<br>
+<br>
+<code>
+<pre>
+<FONT COLOR="#008080">/*
+
+  Exercise 7-1. Write a program that converts upper case to lower case or lower case to upper, 
+                depending on the name it is invoked with, as found in argv[0].
+
+
+  Assumptions: The program should read from stdin, until EOF, converting the output to stdout
+               appropriately. 
+
+               The correct outputs should be :
+ 
+               Program Name                Output
+               lower                       stdin with all caps converted to lower case
+               upper                       stdin with all lowercase characters converted to uppercase
+               [anything else]             helpful message explaining how to use this
+
+  Author : Bryan Williams
+
+*/</FONT>
+
+<FONT COLOR="#0000FF"><B>#include &lt;stdio.h&gt;</B></FONT>
+<FONT COLOR="#0000FF"><B>#include &lt;stdlib.h&gt;</B></FONT>
+<FONT COLOR="#0000FF"><B>#include &lt;ctype.h&gt;</B></FONT>
+
+<FONT COLOR="#0000FF"><B>#define SUCCESS           0</B></FONT>
+<FONT COLOR="#0000FF"><B>#define NO_ARGV0          1</B></FONT>
+<FONT COLOR="#0000FF"><B>#define BAD_NAME          2</B></FONT>
+
+
+<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">main</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">argc</FONT><FONT COLOR="#000080">,</FONT> <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">[])</FONT>
+<FONT COLOR="#000080">{</FONT>
+  <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">ErrorStatus</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">SUCCESS</FONT><FONT COLOR="#000080">;</FONT>
+  <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#000080">(*</FONT><FONT COLOR="#008000">convert</FONT><FONT COLOR="#000080">)(</FONT><B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">;</FONT>
+  <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+   
+  <FONT COLOR="#008080">/* check that there were any arguments */</FONT>
+  <B><FONT COLOR="#000080">if</FONT></B><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">SUCCESS</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#008000">ErrorStatus</FONT><FONT COLOR="#000080">)</FONT>
+  <FONT COLOR="#000080">{</FONT>
+    <B><FONT COLOR="#000080">if</FONT></B><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000"><B>0</B></FONT> <FONT COLOR="#000080">&gt;=</FONT> <FONT COLOR="#008000">argc</FONT><FONT COLOR="#000080">)</FONT>
+    <FONT COLOR="#000080">{</FONT>
+      <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;Your environment has not provided a single argument for the program name.\n&quot;</FONT><FONT COLOR="#000080">);</FONT>
+      <FONT COLOR="#008000">ErrorStatus</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">NO_ARGV0</FONT><FONT COLOR="#000080">;</FONT>
+    <FONT COLOR="#000080">}</FONT>
+  <FONT COLOR="#000080">}</FONT>
+
+  <FONT COLOR="#008080">/* check for valid names in the argv[0] string */</FONT>
+  <B><FONT COLOR="#000080">if</FONT></B><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">SUCCESS</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#008000">ErrorStatus</FONT><FONT COLOR="#000080">)</FONT>
+  <FONT COLOR="#000080">{</FONT>
+    <B><FONT COLOR="#000080">if</FONT></B><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000"><B>0</B></FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#008000">strcmp</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">],</FONT> <FONT COLOR="#000000">&quot;lower&quot;</FONT><FONT COLOR="#000080">))</FONT>
+    <FONT COLOR="#000080">{</FONT>
+      <FONT COLOR="#008000">convert</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">tolower</FONT><FONT COLOR="#000080">;</FONT>
+    <FONT COLOR="#000080">}</FONT> 
+    <B><FONT COLOR="#000080">else</FONT></B> <B><FONT COLOR="#000080">if</FONT></B><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000"><B>0</B></FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#008000">strcmp</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">],</FONT> <FONT COLOR="#000000">&quot;upper&quot;</FONT><FONT COLOR="#000080">))</FONT>
+    <FONT COLOR="#000080">{</FONT>
+      <FONT COLOR="#008000">convert</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">toupper</FONT><FONT COLOR="#000080">;</FONT>
+    <FONT COLOR="#000080">}</FONT>
+    <B><FONT COLOR="#000080">else</FONT></B>
+    <FONT COLOR="#000080">{</FONT>
+      <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;This program performs two functions.\n&quot;</FONT><FONT COLOR="#000080">);</FONT>
+      <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;If the executable is named lower then it converts all the input on stdin to lowercase.\n&quot;</FONT><FONT COLOR="#000080">);</FONT>
+      <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;If the executable is named upper then it converts all the input on stdin to uppercase.\n&quot;</FONT><FONT COLOR="#000080">);</FONT>
+      <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;As you have named it %s it prints this message.\n&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">]);</FONT>
+      <FONT COLOR="#008000">ErrorStatus</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">BAD_NAME</FONT><FONT COLOR="#000080">;</FONT>
+    <FONT COLOR="#000080">}</FONT>
+  <FONT COLOR="#000080">}</FONT>
+
+  <FONT COLOR="#008080">/* ok so far, keep looping until EOF is encountered */</FONT>
+  <B><FONT COLOR="#000080">if</FONT></B><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">SUCCESS</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#008000">ErrorStatus</FONT><FONT COLOR="#000080">)</FONT>
+  <FONT COLOR="#000080">{</FONT>
+    <B><FONT COLOR="#000080">while</FONT></B><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">EOF</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">getchar</FONT><FONT COLOR="#000080">()))</FONT>
+    <FONT COLOR="#000080">{</FONT>
+      <FONT COLOR="#008000">putchar</FONT><FONT COLOR="#000080">((*</FONT><FONT COLOR="#008000">convert</FONT><FONT COLOR="#000080">)(</FONT><FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">));</FONT>
+    <FONT COLOR="#000080">}</FONT>
+  <FONT COLOR="#000080">}</FONT>
+
+  <FONT COLOR="#008080">/* and return what happened */</FONT>
+  <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#008000">SUCCESS</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#008000">ErrorStatus</FONT> <FONT COLOR="#000080">?</FONT> <FONT COLOR="#008000">EXIT_SUCCESS</FONT> <FONT COLOR="#000080">:</FONT> <FONT COLOR="#008000">EXIT_FAILURE</FONT><FONT COLOR="#000080">;</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+
+
+
+</pre>
+</code>
+
+<br>
+<br>
+<br>
+<br>
+
+<a href=index.html>  Back to index </a></body></html>

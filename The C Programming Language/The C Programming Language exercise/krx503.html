@@ -1,0 +1,171 @@
+
+<html>
+  <head>
+
+    <title>
+      The C Programming Language Exercise 5-3
+    </title>
+
+  <BODY    text="#000000"
+        bgcolor="#DDDDDD"
+           link="#800000"
+          alink="#008000"
+          vlink="#000080">
+
+
+<center>
+<h2>
+  &quot;The C Programming Language&quot;, 2nd edition, Kernighan and Ritchie
+</h2>
+<h3>
+  Answer to Exercise 5-3, page 107
+</h3>
+<h4>
+  Solution by <a href=mailto:complangc@eton.powernet.co.uk>  Richard Heathfield </a>
+</h4>
+</center>
+
+<i>
+Write a pointer version of the function <code>strcat</code> that we showed in
+Chapter 2: <code>strcat(s,t)</code> copies the string <code>t</code> to the end of <code>s</code> .
+</i>
+<br>
+<br>
+
+<code>
+<pre>
+<FONT COLOR="#008080">/* ex 5-3, p107 */</FONT>
+
+<FONT COLOR="#0000FF"><B>#include &lt;stdio.h&gt;</B></FONT>
+
+<B><FONT COLOR="#000080">void</FONT></B> <FONT COLOR="#008000">strcpy</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">,</FONT> <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">t</FONT><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+  <B><FONT COLOR="#000080">while</FONT></B><FONT COLOR="#000080">(*</FONT><FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">++</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">t</FONT><FONT COLOR="#000080">++);</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+<B><FONT COLOR="#000080">void</FONT></B> <FONT COLOR="#008000">strcat</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">,</FONT> <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">t</FONT><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+  <B><FONT COLOR="#000080">while</FONT></B><FONT COLOR="#000080">(*</FONT><FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">)</FONT>
+  <FONT COLOR="#000080">{</FONT>
+    <FONT COLOR="#000080">++</FONT><FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">;</FONT>
+  <FONT COLOR="#000080">}</FONT>
+  <FONT COLOR="#008000">strcpy</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">t</FONT><FONT COLOR="#000080">);</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">main</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">void</FONT></B><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+  <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#008000">testbuff</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#000000"><B>128</B></FONT><FONT COLOR="#000080">];</FONT>
+
+  <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">test</FONT><FONT COLOR="#000080">[]</FONT> <FONT COLOR="#000080">=</FONT>
+  <FONT COLOR="#000080">{</FONT>
+    <FONT COLOR="#000000">&quot;&quot;</FONT><FONT COLOR="#000080">,</FONT>
+    <FONT COLOR="#000000">&quot;1&quot;</FONT><FONT COLOR="#000080">,</FONT>
+    <FONT COLOR="#000000">&quot;12&quot;</FONT><FONT COLOR="#000080">,</FONT>
+    <FONT COLOR="#000000">&quot;123&quot;</FONT><FONT COLOR="#000080">,</FONT>
+    <FONT COLOR="#000000">&quot;1234&quot;</FONT>
+  <FONT COLOR="#000080">};</FONT>
+
+  <FONT COLOR="#008000">size_t</FONT> <FONT COLOR="#008000">numtests</FONT> <FONT COLOR="#000080">=</FONT> <B><FONT COLOR="#000080">sizeof</FONT></B> <FONT COLOR="#008000">test</FONT> <FONT COLOR="#000080">/</FONT> <B><FONT COLOR="#000080">sizeof</FONT></B> <FONT COLOR="#008000">test</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">];</FONT>
+  <FONT COLOR="#008000">size_t</FONT> <FONT COLOR="#008000">thistest</FONT><FONT COLOR="#000080">;</FONT>
+  <FONT COLOR="#008000">size_t</FONT> <FONT COLOR="#008000">inner</FONT><FONT COLOR="#000080">;</FONT>
+
+  <B><FONT COLOR="#000080">for</FONT></B><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">thistest</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008000">thistest</FONT> <FONT COLOR="#000080">&lt;</FONT> <FONT COLOR="#008000">numtests</FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008000">thistest</FONT><FONT COLOR="#000080">++)</FONT>
+  <FONT COLOR="#000080">{</FONT>
+    <B><FONT COLOR="#000080">for</FONT></B><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">inner</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008000">inner</FONT> <FONT COLOR="#000080">&lt;</FONT> <FONT COLOR="#008000">numtests</FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008000">inner</FONT><FONT COLOR="#000080">++)</FONT>
+    <FONT COLOR="#000080">{</FONT>
+      <FONT COLOR="#008000">strcpy</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">testbuff</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">test</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">thistest</FONT><FONT COLOR="#000080">]);</FONT>
+      <FONT COLOR="#008000">strcat</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">testbuff</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">test</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">inner</FONT><FONT COLOR="#000080">]);</FONT>
+
+      <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;[%s] + [%s] = [%s]\n&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">test</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">thistest</FONT><FONT COLOR="#000080">],</FONT> <FONT COLOR="#008000">test</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">inner</FONT><FONT COLOR="#000080">],</FONT> <FONT COLOR="#008000">testbuff</FONT><FONT COLOR="#000080">);</FONT>
+    <FONT COLOR="#000080">}</FONT>
+  <FONT COLOR="#000080">}</FONT>
+
+  <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+</pre>
+</code>
+
+
+<br>
+<br>
+Give nineteen programmers a spec, and you'll get at least twenty completely different programs.
+As a tiny example of this, here's a totally different solution, by <a href=mailto:gfd34@dial.pipex.com>  Bryan Williams. </a>
+<br>
+<br>
+
+<code>
+<pre>
+<FONT COLOR="#008080">/*
+
+  Exercise 5-3. Write a pointer version of the function strcat that we showed in 
+                Chapter 2: strcat(s,t) copies the string t to the end of s.
+
+  implementation from chapter 2:
+
+/ * strcat:  concatenate t to end of s; s must be big enough * /
+void strcat(char s[], char t[])
+{
+  int i, j;
+
+  i = j = 0;
+  while (s[i] != '\0')  / * find end of s * /
+    i++;
+  while ((s[i++] = t[j++]) != '\0')  / * copy t * /
+    ;
+}
+
+
+  Author : Bryan Williams 
+
+*/</FONT>
+
+
+<FONT COLOR="#008080">/* strcat:  concatenate t to end of s; s must be big enough; pointer version */</FONT>
+<B><FONT COLOR="#000080">void</FONT></B> <FONT COLOR="#008000">strcat</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">,</FONT> <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">t</FONT><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+  <FONT COLOR="#008080">/* run through the destination string until we point at the terminating '\0' */</FONT> 
+  <B><FONT COLOR="#000080">while</FONT></B><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000"><B>'\0'</B></FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">)</FONT>
+  <FONT COLOR="#000080">{</FONT>
+    <FONT COLOR="#000080">++</FONT><FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">;</FONT>
+  <FONT COLOR="#000080">}</FONT>
+
+  <FONT COLOR="#008080">/* now copy until we run out of string to copy */</FONT>
+  <B><FONT COLOR="#000080">while</FONT></B><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000"><B>'\0'</B></FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#000080">(*</FONT><FONT COLOR="#008000">s</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">t</FONT><FONT COLOR="#000080">))</FONT>
+  <FONT COLOR="#000080">{</FONT>
+    <FONT COLOR="#000080">++</FONT><FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">;</FONT>
+    <FONT COLOR="#000080">++</FONT><FONT COLOR="#008000">t</FONT><FONT COLOR="#000080">;</FONT>
+  <FONT COLOR="#000080">}</FONT>
+
+<FONT COLOR="#000080">}</FONT>
+
+<FONT COLOR="#0000FF"><B>#define DRIVER         6</B></FONT>
+
+<FONT COLOR="#0000FF"><B>#if DRIVER</B></FONT>
+<FONT COLOR="#0000FF"><B>#include &lt;stdio.h&gt;</B></FONT>
+
+<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">main</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">void</FONT></B><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+  <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#008000">S1</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#000000"><B>8192</B></FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000">&quot;String One&quot;</FONT><FONT COLOR="#000080">;</FONT>
+  <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#008000">S2</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#000000"><B>8192</B></FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000">&quot;String Two&quot;</FONT><FONT COLOR="#000080">;</FONT>
+
+
+  <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;String one is (%s)\n&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">S1</FONT><FONT COLOR="#000080">);</FONT>
+  <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;String two is (%s)\n&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">S2</FONT><FONT COLOR="#000080">);</FONT>
+ 
+  <FONT COLOR="#008000">strcat</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">S1</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">S2</FONT><FONT COLOR="#000080">);</FONT>
+  <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;The combined string is (%s)\n&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">S1</FONT><FONT COLOR="#000080">);</FONT>
+
+  <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+<FONT COLOR="#0000FF"><B>#endif</B></FONT>
+
+
+</pre>
+</code>
+
+<br>
+<br>
+
+<a href=index.html>  Back to index </a></body></html>

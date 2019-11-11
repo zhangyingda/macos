@@ -1,0 +1,1008 @@
+<html>
+  <head>
+
+    <title>
+      The C Programming Language Exercise 5-13
+    </title>
+
+  <BODY    text="#000000"
+        bgcolor="#DDDDDD"
+           link="#800000"
+          alink="#008000"
+          vlink="#000080">
+
+
+<center>
+<h2>
+  &quot;The C Programming Language&quot;, 2nd edition, Kernighan and Ritchie
+</h2>
+<h3>
+  Answer to Exercise 5-13, page 118
+</h3>
+<h4>
+  Solutions by <a href=mailto:gkp1@flash.net>  Gregory Pietsch </a> and
+    <a href=mailto:steven.huang@iname.com>  Steven Huang </a>
+</h4>
+</center>
+
+<i>
+Write the program <code>tail,</code> which prints the last <code>n</code> lines of its input. By default, <code>n</code> is 10, say,
+but it can be changed by an optional argument, so that
+<br>
+<code>
+<pre>
+  <FONT COLOR="#008000">tail</FONT> <FONT COLOR="#000080">-</FONT><FONT COLOR="#008000">n</FONT>
+</pre>
+</code>
+
+<br>
+prints the last <code>n</code> lines. The program should behave rationally no matter
+how unreasonable the input or the value of <code>n.</code> Write the program so it makes the
+best use of available storage; lines should be stored as in the sorting program
+of Section 5.6, not in a two-dimensional array of fixed size.
+</i>
+<br>
+Gregory Pietsch's solution
+<br>
+<code>
+<pre>
+<FONT COLOR="#008080">/****************************************************************************
+
+tail.c - Source code for the tail command
+
+AUTHOR: Gregory Pietsch &lt;gkp1@flash.net&gt;
+
+DESCRIPTION:
+
+tail prints the last part of each file on the command line (10 lines by
+default); it reads from standard input if no files are given or when a
+filename of `-' is encountered.  If more than one file is given, it
+prints a header consisting of the file's name enclosed in `==&gt;' and `&lt;==' before
+the output for each file.
+
+There are two option formats for tail:  the new one, in which numbers are
+arguments to the option letters; and the old one, in which the number
+precedes any option letters.  In this version, the old format is barely
+supported.  Supporting it fully is left as an exercise to the reader ;-).
+
+GNU's -f (or --follow) option is not supported.  With that option, the
+program loops forever on the assumption that the file being tailed is
+growing.  I couldn't figure out how to determine if the program is reading
+from a pipe in ANSI C; this option is ignored if reading from a pipe.
+
+****************************************************************************/</FONT>
+
+<FONT COLOR="#008080">/* include files */</FONT>
+<FONT COLOR="#0000FF"><B>#include &lt;ctype.h&gt;</B></FONT>
+<FONT COLOR="#0000FF"><B>#include &lt;stdio.h&gt;</B></FONT>
+<FONT COLOR="#0000FF"><B>#include &lt;stdlib.h&gt;</B></FONT>
+<FONT COLOR="#0000FF"><B>#include &lt;string.h&gt;</B></FONT>
+
+<FONT COLOR="#008080">/* macros */</FONT>
+
+<FONT COLOR="#0000FF"><B>#define NO_ARG          0</B></FONT>
+<FONT COLOR="#0000FF"><B>#define REQUIRED_ARG    1</B></FONT>
+<FONT COLOR="#0000FF"><B>#define OPTIONAL_ARG    2</B></FONT>
+
+ <FONT COLOR="#008080">/* how many characters will fill one's tail (literally) */</FONT>
+<FONT COLOR="#0000FF"><B>#define TAIL_BUFFER_SIZE 16384</B></FONT>
+
+ <FONT COLOR="#008080">/* how much for a string buffer */</FONT>
+<FONT COLOR="#0000FF"><B>#define TAIL_STRING_BUFFER_SIZE 256</B></FONT>
+
+ <FONT COLOR="#008080">/* need MIN */</FONT>
+<FONT COLOR="#0000FF"><B>#ifndef MIN</B></FONT>
+<FONT COLOR="#0000FF"><B>#define MIN(x,y) ((x)&lt;(y)?(x):(y))</B></FONT>
+<FONT COLOR="#0000FF"><B>#endif</B></FONT>
+
+<FONT COLOR="#008080">/* types */</FONT>
+
+<B><FONT COLOR="#000080">typedef</FONT></B> <B><FONT COLOR="#000080">enum</FONT></B> <FONT COLOR="#008000">VERBOSITY_T</FONT> <FONT COLOR="#000080">{</FONT>
+    <FONT COLOR="#008000">NEVER</FONT><FONT COLOR="#000080">,</FONT>
+    <FONT COLOR="#008000">SOMETIMES</FONT><FONT COLOR="#000080">,</FONT>
+    <FONT COLOR="#008000">ALWAYS</FONT>
+<FONT COLOR="#000080">}</FONT> <FONT COLOR="#008000">VERBOSITY_T</FONT><FONT COLOR="#000080">;</FONT>
+
+<B><FONT COLOR="#000080">typedef</FONT></B> <B><FONT COLOR="#000080">struct</FONT></B> <FONT COLOR="#008000">LINE_QUEUE_EL_T</FONT> <FONT COLOR="#000080">{</FONT>
+    <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">;</FONT>
+    <B><FONT COLOR="#000080">struct</FONT></B> <FONT COLOR="#008000">LINE_QUEUE_EL_T</FONT> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">next</FONT><FONT COLOR="#000080">;</FONT>
+<FONT COLOR="#000080">}</FONT> <FONT COLOR="#008000">LINE_QUEUE_EL_T</FONT><FONT COLOR="#000080">;</FONT>
+
+<B><FONT COLOR="#000080">typedef</FONT></B> <B><FONT COLOR="#000080">struct</FONT></B> <FONT COLOR="#008000">LINE_QUEUE_T</FONT> <FONT COLOR="#000080">{</FONT>
+    <B><FONT COLOR="#000080">struct</FONT></B> <FONT COLOR="#008000">LINE_QUEUE_EL_T</FONT> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">first</FONT><FONT COLOR="#000080">;</FONT>
+    <B><FONT COLOR="#000080">struct</FONT></B> <FONT COLOR="#008000">LINE_QUEUE_EL_T</FONT> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">last</FONT><FONT COLOR="#000080">;</FONT>
+    <B><FONT COLOR="#000080">unsigned</FONT></B> <B><FONT COLOR="#000080">long</FONT></B> <FONT COLOR="#008000">num_elements</FONT><FONT COLOR="#000080">;</FONT>
+<FONT COLOR="#000080">}</FONT> <FONT COLOR="#008000">LINE_QUEUE_T</FONT><FONT COLOR="#000080">;</FONT>
+
+<FONT COLOR="#008080">/* GETOPT_LONG_OPTION_T: The type of long option */</FONT>
+<B><FONT COLOR="#000080">typedef</FONT></B> <B><FONT COLOR="#000080">struct</FONT></B> <FONT COLOR="#008000">GETOPT_LONG_OPTION_T</FONT> <FONT COLOR="#000080">{</FONT>
+    <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">name</FONT><FONT COLOR="#000080">;</FONT>                 <FONT COLOR="#008080">/* the name of the long option */</FONT>
+    <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">has_arg</FONT><FONT COLOR="#000080">;</FONT>                <FONT COLOR="#008080">/* one of the above macros */</FONT>
+    <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">flag</FONT><FONT COLOR="#000080">;</FONT>                  <FONT COLOR="#008080">/* determines if getopt_long() returns a
+                                 * value for a long option; if it is
+                                 * non-NULL, 0 is returned as a function
+                                 * value and the value of val is stored in
+                                 * the area pointed to by flag. Otherwise,
+                                 * val is returned. */</FONT>
+    <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">val</FONT><FONT COLOR="#000080">;</FONT>                    <FONT COLOR="#008080">/* determines the value to return if flag is
+                                 * NULL. */</FONT>
+<FONT COLOR="#000080">}</FONT> <FONT COLOR="#008000">GETOPT_LONG_OPTION_T</FONT><FONT COLOR="#000080">;</FONT>
+
+<B><FONT COLOR="#000080">typedef</FONT></B> <B><FONT COLOR="#000080">enum</FONT></B> <FONT COLOR="#008000">GETOPT_ORDERING_T</FONT> <FONT COLOR="#000080">{</FONT>
+    <FONT COLOR="#008000">PERMUTE</FONT><FONT COLOR="#000080">,</FONT>
+    <FONT COLOR="#008000">RETURN_IN_ORDER</FONT><FONT COLOR="#000080">,</FONT>
+    <FONT COLOR="#008000">REQUIRE_ORDER</FONT>
+<FONT COLOR="#000080">}</FONT> <FONT COLOR="#008000">GETOPT_ORDERING_T</FONT><FONT COLOR="#000080">;</FONT>
+
+<FONT COLOR="#008080">/* globally-defined variables */</FONT>
+<B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">optarg</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">;</FONT>
+<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">optind</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">opterr</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">;</FONT>
+<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">optopt</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>'?'</B></FONT><FONT COLOR="#000080">;</FONT>
+
+<FONT COLOR="#008080">/* statically-defined variables */</FONT>
+
+<B><FONT COLOR="#000080">static</FONT></B> <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">show_help</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+<B><FONT COLOR="#000080">static</FONT></B> <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">show_version</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+<B><FONT COLOR="#000080">static</FONT></B> <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">shortopts</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000">&quot;c:l:n:qv&quot;</FONT><FONT COLOR="#000080">;</FONT>
+<B><FONT COLOR="#000080">static</FONT></B> <FONT COLOR="#008000">GETOPT_LONG_OPTION_T</FONT> <FONT COLOR="#008000">longopts</FONT><FONT COLOR="#000080">[]</FONT> <FONT COLOR="#000080">=</FONT>
+<FONT COLOR="#000080">{</FONT>
+    <FONT COLOR="#000080">{</FONT><FONT COLOR="#000000">&quot;bytes&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">REQUIRED_ARG</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000000"><B>'c'</B></FONT><FONT COLOR="#000080">},</FONT>
+    <FONT COLOR="#000080">{</FONT><FONT COLOR="#000000">&quot;lines&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">REQUIRED_ARG</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000000"><B>'n'</B></FONT><FONT COLOR="#000080">},</FONT>
+    <FONT COLOR="#000080">{</FONT><FONT COLOR="#000000">&quot;quiet&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">NO_ARG</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000000"><B>'q'</B></FONT><FONT COLOR="#000080">},</FONT>
+    <FONT COLOR="#000080">{</FONT><FONT COLOR="#000000">&quot;silent&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">NO_ARG</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000000"><B>'q'</B></FONT><FONT COLOR="#000080">},</FONT>
+    <FONT COLOR="#000080">{</FONT><FONT COLOR="#000000">&quot;verbose&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">NO_ARG</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000000"><B>'v'</B></FONT><FONT COLOR="#000080">},</FONT>
+
+    <FONT COLOR="#000080">{</FONT><FONT COLOR="#000000">&quot;help&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">NO_ARG</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000080">&amp;</FONT><FONT COLOR="#008000">show_help</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">},</FONT>
+    <FONT COLOR="#000080">{</FONT><FONT COLOR="#000000">&quot;version&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">NO_ARG</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000080">&amp;</FONT><FONT COLOR="#008000">show_version</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">},</FONT>
+    <FONT COLOR="#000080">{</FONT><FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">}</FONT>
+<FONT COLOR="#000080">};</FONT>
+<B><FONT COLOR="#000080">static</FONT></B> <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">program_name</FONT><FONT COLOR="#000080">;</FONT>
+<B><FONT COLOR="#000080">static</FONT></B> <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">flag_bytes</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+<B><FONT COLOR="#000080">static</FONT></B> <FONT COLOR="#008000">VERBOSITY_T</FONT> <FONT COLOR="#008000">flag_verbosity</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">SOMETIMES</FONT><FONT COLOR="#000080">;</FONT>
+<B><FONT COLOR="#000080">static</FONT></B> <B><FONT COLOR="#000080">unsigned</FONT></B> <B><FONT COLOR="#000080">long</FONT></B> <FONT COLOR="#008000">number</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+<B><FONT COLOR="#000080">static</FONT></B> <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">flag_skip</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+
+<FONT COLOR="#008080">/* functions */</FONT>
+
+<FONT COLOR="#008080">/* reverse_argv_elements:  reverses num elements starting at argv */</FONT>
+<B><FONT COLOR="#000080">static</FONT></B> <B><FONT COLOR="#000080">void</FONT></B> <FONT COLOR="#008000">reverse_argv_elements</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">**</FONT><FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">,</FONT> <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">num</FONT><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+    <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">;</FONT>
+    <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">tmp</FONT><FONT COLOR="#000080">;</FONT>
+
+    <B><FONT COLOR="#000080">for</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">i</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008000">i</FONT> <FONT COLOR="#000080">&lt;</FONT> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">num</FONT> <FONT COLOR="#000080">&gt;&gt;</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">);</FONT> <FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">++)</FONT> <FONT COLOR="#000080">{</FONT>
+        <FONT COLOR="#008000">tmp</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">];</FONT>
+        <FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">num</FONT> <FONT COLOR="#000080">-</FONT> <FONT COLOR="#008000">i</FONT> <FONT COLOR="#000080">-</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">];</FONT>
+        <FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">num</FONT> <FONT COLOR="#000080">-</FONT> <FONT COLOR="#008000">i</FONT> <FONT COLOR="#000080">-</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">tmp</FONT><FONT COLOR="#000080">;</FONT>
+    <FONT COLOR="#000080">}</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+<FONT COLOR="#008080">/* permute: swap two blocks of argv-elements given their lengths */</FONT>
+<B><FONT COLOR="#000080">static</FONT></B> <B><FONT COLOR="#000080">void</FONT></B> <FONT COLOR="#008000">permute</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">**</FONT><FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">,</FONT> <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">len1</FONT><FONT COLOR="#000080">,</FONT> <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">len2</FONT><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+    <FONT COLOR="#008000">reverse_argv_elements</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">len1</FONT><FONT COLOR="#000080">);</FONT>
+    <FONT COLOR="#008000">reverse_argv_elements</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">len1</FONT> <FONT COLOR="#000080">+</FONT> <FONT COLOR="#008000">len2</FONT><FONT COLOR="#000080">);</FONT>
+    <FONT COLOR="#008000">reverse_argv_elements</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">len2</FONT><FONT COLOR="#000080">);</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+<FONT COLOR="#008080">/* is_option: is this argv-element an option or the end of the option list? */</FONT>
+<B><FONT COLOR="#000080">static</FONT></B> <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">is_option</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">argv_element</FONT><FONT COLOR="#000080">,</FONT> <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">only</FONT><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+    <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#000080">((</FONT><FONT COLOR="#008000">argv_element</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">)</FONT>
+            <FONT COLOR="#000080">||</FONT> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">argv_element</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'-'</B></FONT><FONT COLOR="#000080">)</FONT>
+            <FONT COLOR="#000080">||</FONT> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">only</FONT> <FONT COLOR="#000080">&amp;&amp;</FONT> <FONT COLOR="#008000">argv_element</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'+'</B></FONT><FONT COLOR="#000080">));</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+<FONT COLOR="#008080">/* getopt_internal:  the function that does all the dirty work */</FONT>
+<B><FONT COLOR="#000080">static</FONT></B> <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">getopt_internal</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">argc</FONT><FONT COLOR="#000080">,</FONT> <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">**</FONT><FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">,</FONT> <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">shortopts</FONT><FONT COLOR="#000080">,</FONT>
+                 <FONT COLOR="#008000">GETOPT_LONG_OPTION_T</FONT> <FONT COLOR="#000080">*</FONT> <FONT COLOR="#008000">longopts</FONT><FONT COLOR="#000080">,</FONT> <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">longind</FONT><FONT COLOR="#000080">,</FONT> <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">only</FONT><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+    <FONT COLOR="#008000">GETOPT_ORDERING_T</FONT> <FONT COLOR="#008000">ordering</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">PERMUTE</FONT><FONT COLOR="#000080">;</FONT>
+    <B><FONT COLOR="#000080">static</FONT></B> <FONT COLOR="#008000">size_t</FONT> <FONT COLOR="#008000">optwhere</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+    <FONT COLOR="#008000">size_t</FONT> <FONT COLOR="#008000">permute_from</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+    <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">num_nonopts</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+    <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">optindex</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+    <FONT COLOR="#008000">size_t</FONT> <FONT COLOR="#008000">match_chars</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+    <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">possible_arg</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">;</FONT>
+    <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">longopt_match</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000080">-</FONT><FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">;</FONT>
+    <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">has_arg</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000080">-</FONT><FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">;</FONT>
+    <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">cp</FONT><FONT COLOR="#000080">;</FONT>
+    <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">arg_next</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+
+    <FONT COLOR="#008080">/* first, deal with silly parameters and easy stuff */</FONT>
+    <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">argc</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>0</B></FONT> <FONT COLOR="#000080">||</FONT> <FONT COLOR="#008000">argv</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#008000">NULL</FONT> <FONT COLOR="#000080">||</FONT> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">shortopts</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#008000">NULL</FONT> <FONT COLOR="#000080">&amp;&amp;</FONT> <FONT COLOR="#008000">longopts</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">))</FONT>
+        <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">optopt</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>'?'</B></FONT><FONT COLOR="#000080">);</FONT>
+    <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">optind</FONT> <FONT COLOR="#000080">&gt;=</FONT> <FONT COLOR="#008000">argc</FONT> <FONT COLOR="#000080">||</FONT> <FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">optind</FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">)</FONT>
+        <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#008000">EOF</FONT><FONT COLOR="#000080">;</FONT>
+    <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">strcmp</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">optind</FONT><FONT COLOR="#000080">],</FONT> <FONT COLOR="#000000">&quot;--&quot;</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+        <FONT COLOR="#008000">optind</FONT><FONT COLOR="#000080">++;</FONT>
+        <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#008000">EOF</FONT><FONT COLOR="#000080">;</FONT>
+    <FONT COLOR="#000080">}</FONT>
+    <FONT COLOR="#008080">/* if this is our first time through */</FONT>
+    <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">optind</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">)</FONT>
+        <FONT COLOR="#008000">optind</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">optwhere</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">;</FONT>
+
+    <FONT COLOR="#008080">/* define ordering */</FONT>
+    <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">shortopts</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#008000">NULL</FONT> <FONT COLOR="#000080">&amp;&amp;</FONT> <FONT COLOR="#000080">(*</FONT><FONT COLOR="#008000">shortopts</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'-'</B></FONT> <FONT COLOR="#000080">||</FONT> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">shortopts</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'+'</B></FONT><FONT COLOR="#000080">))</FONT> <FONT COLOR="#000080">{</FONT>
+        <FONT COLOR="#008000">ordering</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000080">(*</FONT><FONT COLOR="#008000">shortopts</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'-'</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">?</FONT> <FONT COLOR="#008000">RETURN_IN_ORDER</FONT> <FONT COLOR="#000080">:</FONT> <FONT COLOR="#008000">REQUIRE_ORDER</FONT><FONT COLOR="#000080">;</FONT>
+        <FONT COLOR="#008000">shortopts</FONT><FONT COLOR="#000080">++;</FONT>
+    <FONT COLOR="#000080">}</FONT>
+    <B><FONT COLOR="#000080">else</FONT></B>
+        <FONT COLOR="#008000">ordering</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">getenv</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;POSIXLY_CORRECT&quot;</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">?</FONT> <FONT COLOR="#008000">REQUIRE_ORDER</FONT> <FONT COLOR="#000080">:</FONT>
+            <FONT COLOR="#008000">PERMUTE</FONT><FONT COLOR="#000080">;</FONT>
+
+    <FONT COLOR="#008080">/*
+     * based on ordering, find our next option, if we're at the beginning of
+     * one
+     */</FONT>
+    <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">optwhere</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+        <B><FONT COLOR="#000080">switch</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">ordering</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+        <B><FONT COLOR="#000080">case</FONT></B> <FONT COLOR="#008000">PERMUTE</FONT><FONT COLOR="#000080">:</FONT>
+            <FONT COLOR="#008000">permute_from</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">optind</FONT><FONT COLOR="#000080">;</FONT>
+            <FONT COLOR="#008000">num_nonopts</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+            <B><FONT COLOR="#000080">while</FONT></B> <FONT COLOR="#000080">(!</FONT><FONT COLOR="#008000">is_option</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">optind</FONT><FONT COLOR="#000080">],</FONT> <FONT COLOR="#008000">only</FONT><FONT COLOR="#000080">))</FONT> <FONT COLOR="#000080">{</FONT>
+                <FONT COLOR="#008000">optind</FONT><FONT COLOR="#000080">++;</FONT>
+                <FONT COLOR="#008000">num_nonopts</FONT><FONT COLOR="#000080">++;</FONT>
+            <FONT COLOR="#000080">}</FONT>
+            <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">optind</FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+                <FONT COLOR="#008080">/* no more options */</FONT>
+                <FONT COLOR="#008000">optind</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">permute_from</FONT><FONT COLOR="#000080">;</FONT>
+                <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#008000">EOF</FONT><FONT COLOR="#000080">;</FONT>
+            <FONT COLOR="#000080">}</FONT> <B><FONT COLOR="#000080">else</FONT></B> <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">strcmp</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">optind</FONT><FONT COLOR="#000080">],</FONT> <FONT COLOR="#000000">&quot;--&quot;</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+                <FONT COLOR="#008080">/* no more options, but have to get `--' out of the way */</FONT>
+                <FONT COLOR="#008000">permute</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">argv</FONT> <FONT COLOR="#000080">+</FONT> <FONT COLOR="#008000">permute_from</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">num_nonopts</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">);</FONT>
+                <FONT COLOR="#008000">optind</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">permute_from</FONT> <FONT COLOR="#000080">+</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">;</FONT>
+                <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#008000">EOF</FONT><FONT COLOR="#000080">;</FONT>
+            <FONT COLOR="#000080">}</FONT>
+            <B><FONT COLOR="#000080">break</FONT></B><FONT COLOR="#000080">;</FONT>
+        <B><FONT COLOR="#000080">case</FONT></B> <FONT COLOR="#008000">RETURN_IN_ORDER</FONT><FONT COLOR="#000080">:</FONT>
+            <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(!</FONT><FONT COLOR="#008000">is_option</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">optind</FONT><FONT COLOR="#000080">],</FONT> <FONT COLOR="#008000">only</FONT><FONT COLOR="#000080">))</FONT> <FONT COLOR="#000080">{</FONT>
+                <FONT COLOR="#008000">optarg</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">optind</FONT><FONT COLOR="#000080">++];</FONT>
+                <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">optopt</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">);</FONT>
+            <FONT COLOR="#000080">}</FONT>
+            <B><FONT COLOR="#000080">break</FONT></B><FONT COLOR="#000080">;</FONT>
+        <B><FONT COLOR="#000080">case</FONT></B> <FONT COLOR="#008000">REQUIRE_ORDER</FONT><FONT COLOR="#000080">:</FONT>
+            <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(!</FONT><FONT COLOR="#008000">is_option</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">optind</FONT><FONT COLOR="#000080">],</FONT> <FONT COLOR="#008000">only</FONT><FONT COLOR="#000080">))</FONT>
+                <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#008000">EOF</FONT><FONT COLOR="#000080">;</FONT>
+            <B><FONT COLOR="#000080">break</FONT></B><FONT COLOR="#000080">;</FONT>
+        <FONT COLOR="#000080">}</FONT>
+    <FONT COLOR="#000080">}</FONT>
+    <FONT COLOR="#008080">/* we've got an option, so parse it */</FONT>
+
+    <FONT COLOR="#008080">/* first, is it a long option? */</FONT>
+    <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">longopts</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#008000">NULL</FONT>
+        <FONT COLOR="#000080">&amp;&amp;</FONT> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">memcmp</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">optind</FONT><FONT COLOR="#000080">],</FONT> <FONT COLOR="#000000">&quot;--&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000000"><B>2</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>0</B></FONT>
+            <FONT COLOR="#000080">||</FONT> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">only</FONT> <FONT COLOR="#000080">&amp;&amp;</FONT> <FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">optind</FONT><FONT COLOR="#000080">][</FONT><FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'+'</B></FONT><FONT COLOR="#000080">))</FONT>
+        <FONT COLOR="#000080">&amp;&amp;</FONT> <FONT COLOR="#008000">optwhere</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+        <FONT COLOR="#008080">/* handle long options */</FONT>
+        <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">memcmp</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">optind</FONT><FONT COLOR="#000080">],</FONT> <FONT COLOR="#000000">&quot;--&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000000"><B>2</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">)</FONT>
+            <FONT COLOR="#008000">optwhere</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>2</B></FONT><FONT COLOR="#000080">;</FONT>
+        <FONT COLOR="#008000">longopt_match</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000080">-</FONT><FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">;</FONT>
+        <FONT COLOR="#008000">possible_arg</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">strchr</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">optind</FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">+</FONT> <FONT COLOR="#008000">optwhere</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000000"><B>'='</B></FONT><FONT COLOR="#000080">);</FONT>
+        <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">possible_arg</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+            <FONT COLOR="#008080">/* no =, so next argv might be arg */</FONT>
+            <FONT COLOR="#008000">match_chars</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">strlen</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">optind</FONT><FONT COLOR="#000080">]);</FONT>
+            <FONT COLOR="#008000">possible_arg</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">optind</FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">+</FONT> <FONT COLOR="#008000">match_chars</FONT><FONT COLOR="#000080">;</FONT>
+            <FONT COLOR="#008000">match_chars</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">match_chars</FONT> <FONT COLOR="#000080">-</FONT> <FONT COLOR="#008000">optwhere</FONT><FONT COLOR="#000080">;</FONT>
+        <FONT COLOR="#000080">}</FONT>
+        <B><FONT COLOR="#000080">else</FONT></B>
+            <FONT COLOR="#008000">match_chars</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">possible_arg</FONT> <FONT COLOR="#000080">-</FONT> <FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">optind</FONT><FONT COLOR="#000080">])</FONT> <FONT COLOR="#000080">-</FONT> <FONT COLOR="#008000">optwhere</FONT><FONT COLOR="#000080">;</FONT>
+        <B><FONT COLOR="#000080">for</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">optindex</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008000">longopts</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">optindex</FONT><FONT COLOR="#000080">].</FONT><FONT COLOR="#008000">name</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008000">optindex</FONT><FONT COLOR="#000080">++)</FONT> <FONT COLOR="#000080">{</FONT>
+            <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">memcmp</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">optind</FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">+</FONT> <FONT COLOR="#008000">optwhere</FONT><FONT COLOR="#000080">,</FONT>
+                       <FONT COLOR="#008000">longopts</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">optindex</FONT><FONT COLOR="#000080">].</FONT><FONT COLOR="#008000">name</FONT><FONT COLOR="#000080">,</FONT>
+                       <FONT COLOR="#008000">match_chars</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+                <FONT COLOR="#008080">/* do we have an exact match? */</FONT>
+                <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">match_chars</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">int</FONT></B><FONT COLOR="#000080">)(</FONT><FONT COLOR="#008000">strlen</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">longopts</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">optindex</FONT><FONT COLOR="#000080">].</FONT><FONT COLOR="#008000">name</FONT><FONT COLOR="#000080">)))</FONT> <FONT COLOR="#000080">{</FONT>
+                    <FONT COLOR="#008000">longopt_match</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">optindex</FONT><FONT COLOR="#000080">;</FONT>
+                    <B><FONT COLOR="#000080">break</FONT></B><FONT COLOR="#000080">;</FONT>
+                <FONT COLOR="#000080">}</FONT>
+                <FONT COLOR="#008080">/* do any characters match? */</FONT>
+                <B><FONT COLOR="#000080">else</FONT></B> <FONT COLOR="#000080">{</FONT>
+                    <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">longopt_match</FONT> <FONT COLOR="#000080">&lt;</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">)</FONT>
+                        <FONT COLOR="#008000">longopt_match</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">optindex</FONT><FONT COLOR="#000080">;</FONT>
+                    <B><FONT COLOR="#000080">else</FONT></B> <FONT COLOR="#000080">{</FONT>
+                        <FONT COLOR="#008080">/* we have ambiguous options */</FONT>
+                        <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">opterr</FONT><FONT COLOR="#000080">)</FONT>
+                            <FONT COLOR="#008000">fprintf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">stderr</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000000">&quot;%s: option `%s' is ambiguous &quot;</FONT>
+                                    <FONT COLOR="#000000">&quot;(could be `--%s' or `--%s')\n&quot;</FONT><FONT COLOR="#000080">,</FONT>
+                                    <FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">],</FONT>
+                                    <FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">optind</FONT><FONT COLOR="#000080">],</FONT>
+                                    <FONT COLOR="#008000">longopts</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">longopt_match</FONT><FONT COLOR="#000080">].</FONT><FONT COLOR="#008000">name</FONT><FONT COLOR="#000080">,</FONT>
+                                    <FONT COLOR="#008000">longopts</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">optindex</FONT><FONT COLOR="#000080">].</FONT><FONT COLOR="#008000">name</FONT><FONT COLOR="#000080">);</FONT>
+                        <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">optopt</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>'?'</B></FONT><FONT COLOR="#000080">);</FONT>
+                    <FONT COLOR="#000080">}</FONT>
+                <FONT COLOR="#000080">}</FONT>
+            <FONT COLOR="#000080">}</FONT>
+        <FONT COLOR="#000080">}</FONT>
+        <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">longopt_match</FONT> <FONT COLOR="#000080">&gt;=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">)</FONT>
+            <FONT COLOR="#008000">has_arg</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">longopts</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">longopt_match</FONT><FONT COLOR="#000080">].</FONT><FONT COLOR="#008000">has_arg</FONT><FONT COLOR="#000080">;</FONT>
+    <FONT COLOR="#000080">}</FONT>
+    <FONT COLOR="#008080">/* if we didn't find a long option, is it a short option? */</FONT>
+    <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">longopt_match</FONT> <FONT COLOR="#000080">&lt;</FONT> <FONT COLOR="#000000"><B>0</B></FONT> <FONT COLOR="#000080">&amp;&amp;</FONT> <FONT COLOR="#008000">shortopts</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+        <FONT COLOR="#008000">cp</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">strchr</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">shortopts</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">optind</FONT><FONT COLOR="#000080">][</FONT><FONT COLOR="#008000">optwhere</FONT><FONT COLOR="#000080">]);</FONT>
+        <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">cp</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+            <FONT COLOR="#008080">/* couldn't find option in shortopts */</FONT>
+            <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">opterr</FONT><FONT COLOR="#000080">)</FONT>
+                <FONT COLOR="#008000">fprintf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">stderr</FONT><FONT COLOR="#000080">,</FONT>
+                        <FONT COLOR="#000000">&quot;%s: invalid option -- `-%c'\n&quot;</FONT><FONT COLOR="#000080">,</FONT>
+                        <FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">],</FONT>
+                        <FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">optind</FONT><FONT COLOR="#000080">][</FONT><FONT COLOR="#008000">optwhere</FONT><FONT COLOR="#000080">]);</FONT>
+            <FONT COLOR="#008000">optwhere</FONT><FONT COLOR="#000080">++;</FONT>
+            <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">optind</FONT><FONT COLOR="#000080">][</FONT><FONT COLOR="#008000">optwhere</FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'\0'</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+                <FONT COLOR="#008000">optind</FONT><FONT COLOR="#000080">++;</FONT>
+                <FONT COLOR="#008000">optwhere</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">;</FONT>
+            <FONT COLOR="#000080">}</FONT>
+            <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">optopt</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>'?'</B></FONT><FONT COLOR="#000080">);</FONT>
+        <FONT COLOR="#000080">}</FONT>
+        <FONT COLOR="#008000">has_arg</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000080">((</FONT><FONT COLOR="#008000">cp</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>':'</B></FONT><FONT COLOR="#000080">)</FONT>
+                   <FONT COLOR="#000080">?</FONT> <FONT COLOR="#000080">((</FONT><FONT COLOR="#008000">cp</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#000000"><B>2</B></FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>':'</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">?</FONT> <FONT COLOR="#008000">OPTIONAL_ARG</FONT> <FONT COLOR="#000080">:</FONT> <FONT COLOR="#008000">REQUIRED_ARG</FONT><FONT COLOR="#000080">)</FONT>
+                   <FONT COLOR="#000080">:</FONT> <FONT COLOR="#008000">NO_ARG</FONT><FONT COLOR="#000080">);</FONT>
+        <FONT COLOR="#008000">possible_arg</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">optind</FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">+</FONT> <FONT COLOR="#008000">optwhere</FONT> <FONT COLOR="#000080">+</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">;</FONT>
+        <FONT COLOR="#008000">optopt</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">cp</FONT><FONT COLOR="#000080">;</FONT>
+    <FONT COLOR="#000080">}</FONT>
+    <FONT COLOR="#008080">/* get argument and reset optwhere */</FONT>
+    <FONT COLOR="#008000">arg_next</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+    <B><FONT COLOR="#000080">switch</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">has_arg</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+    <B><FONT COLOR="#000080">case</FONT></B> <FONT COLOR="#008000">OPTIONAL_ARG</FONT><FONT COLOR="#000080">:</FONT>
+        <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(*</FONT><FONT COLOR="#008000">possible_arg</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'='</B></FONT><FONT COLOR="#000080">)</FONT>
+            <FONT COLOR="#008000">possible_arg</FONT><FONT COLOR="#000080">++;</FONT>
+        <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(*</FONT><FONT COLOR="#008000">possible_arg</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#000000"><B>'\0'</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+            <FONT COLOR="#008000">optarg</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">possible_arg</FONT><FONT COLOR="#000080">;</FONT>
+            <FONT COLOR="#008000">optwhere</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">;</FONT>
+        <FONT COLOR="#000080">}</FONT>
+        <B><FONT COLOR="#000080">else</FONT></B>
+            <FONT COLOR="#008000">optarg</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">;</FONT>
+        <B><FONT COLOR="#000080">break</FONT></B><FONT COLOR="#000080">;</FONT>
+    <B><FONT COLOR="#000080">case</FONT></B> <FONT COLOR="#008000">REQUIRED_ARG</FONT><FONT COLOR="#000080">:</FONT>
+        <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(*</FONT><FONT COLOR="#008000">possible_arg</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'='</B></FONT><FONT COLOR="#000080">)</FONT>
+            <FONT COLOR="#008000">possible_arg</FONT><FONT COLOR="#000080">++;</FONT>
+        <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(*</FONT><FONT COLOR="#008000">possible_arg</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#000000"><B>'\0'</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+            <FONT COLOR="#008000">optarg</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">possible_arg</FONT><FONT COLOR="#000080">;</FONT>
+            <FONT COLOR="#008000">optwhere</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">;</FONT>
+        <FONT COLOR="#000080">}</FONT>
+        <B><FONT COLOR="#000080">else</FONT></B> <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">optind</FONT> <FONT COLOR="#000080">+</FONT> <FONT COLOR="#000000"><B>1</B></FONT> <FONT COLOR="#000080">&gt;=</FONT> <FONT COLOR="#008000">argc</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+            <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">opterr</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+                <FONT COLOR="#008000">fprintf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">stderr</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000000">&quot;%s: argument required for option `&quot;</FONT><FONT COLOR="#000080">,</FONT>
+                        <FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">]);</FONT>
+                <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">longopt_match</FONT> <FONT COLOR="#000080">&gt;=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">)</FONT>
+                    <FONT COLOR="#008000">fprintf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">stderr</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000000">&quot;--%s'\n&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">longopts</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">longopt_match</FONT><FONT COLOR="#000080">].</FONT><FONT COLOR="#008000">name</FONT><FONT COLOR="#000080">);</FONT>
+                <B><FONT COLOR="#000080">else</FONT></B>
+                    <FONT COLOR="#008000">fprintf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">stderr</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000000">&quot;-%c'\n&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">cp</FONT><FONT COLOR="#000080">);</FONT>
+            <FONT COLOR="#000080">}</FONT>
+            <FONT COLOR="#008000">optind</FONT><FONT COLOR="#000080">++;</FONT>
+            <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">optopt</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>':'</B></FONT><FONT COLOR="#000080">);</FONT>
+        <FONT COLOR="#000080">}</FONT>
+        <B><FONT COLOR="#000080">else</FONT></B> <FONT COLOR="#000080">{</FONT>
+            <FONT COLOR="#008000">optarg</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">optind</FONT> <FONT COLOR="#000080">+</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">];</FONT>
+            <FONT COLOR="#008000">arg_next</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">;</FONT>
+            <FONT COLOR="#008000">optwhere</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">;</FONT>
+        <FONT COLOR="#000080">}</FONT>
+        <B><FONT COLOR="#000080">break</FONT></B><FONT COLOR="#000080">;</FONT>
+    <B><FONT COLOR="#000080">case</FONT></B> <FONT COLOR="#008000">NO_ARG</FONT><FONT COLOR="#000080">:</FONT>
+        <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">longopt_match</FONT> <FONT COLOR="#000080">&lt;</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+            <FONT COLOR="#008000">optwhere</FONT><FONT COLOR="#000080">++;</FONT>
+            <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">optind</FONT><FONT COLOR="#000080">][</FONT><FONT COLOR="#008000">optwhere</FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'\0'</B></FONT><FONT COLOR="#000080">)</FONT>
+                <FONT COLOR="#008000">optwhere</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">;</FONT>
+        <FONT COLOR="#000080">}</FONT>
+        <B><FONT COLOR="#000080">else</FONT></B>
+            <FONT COLOR="#008000">optwhere</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">;</FONT>
+        <FONT COLOR="#008000">optarg</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">;</FONT>
+        <B><FONT COLOR="#000080">break</FONT></B><FONT COLOR="#000080">;</FONT>
+    <FONT COLOR="#000080">}</FONT>
+
+    <FONT COLOR="#008080">/* do we have to permute or otherwise modify optind? */</FONT>
+    <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">ordering</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#008000">PERMUTE</FONT> <FONT COLOR="#000080">&amp;&amp;</FONT> <FONT COLOR="#008000">optwhere</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>1</B></FONT> <FONT COLOR="#000080">&amp;&amp;</FONT> <FONT COLOR="#008000">num_nonopts</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+        <FONT COLOR="#008000">permute</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">argv</FONT> <FONT COLOR="#000080">+</FONT> <FONT COLOR="#008000">permute_from</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">num_nonopts</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000000"><B>1</B></FONT> <FONT COLOR="#000080">+</FONT> <FONT COLOR="#008000">arg_next</FONT><FONT COLOR="#000080">);</FONT>
+        <FONT COLOR="#008000">optind</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">permute_from</FONT> <FONT COLOR="#000080">+</FONT> <FONT COLOR="#000000"><B>1</B></FONT> <FONT COLOR="#000080">+</FONT> <FONT COLOR="#008000">arg_next</FONT><FONT COLOR="#000080">;</FONT>
+    <FONT COLOR="#000080">}</FONT>
+    <B><FONT COLOR="#000080">else</FONT></B> <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">optwhere</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">)</FONT>
+        <FONT COLOR="#008000">optind</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">optind</FONT> <FONT COLOR="#000080">+</FONT> <FONT COLOR="#000000"><B>1</B></FONT> <FONT COLOR="#000080">+</FONT> <FONT COLOR="#008000">arg_next</FONT><FONT COLOR="#000080">;</FONT>
+
+    <FONT COLOR="#008080">/* finally return */</FONT>
+    <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">longopt_match</FONT> <FONT COLOR="#000080">&gt;=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+        <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">longind</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">)</FONT>
+            <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">longind</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">longopt_match</FONT><FONT COLOR="#000080">;</FONT>
+        <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">longopts</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">longopt_match</FONT><FONT COLOR="#000080">].</FONT><FONT COLOR="#008000">flag</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+            <FONT COLOR="#000080">*(</FONT><FONT COLOR="#008000">longopts</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">longopt_match</FONT><FONT COLOR="#000080">].</FONT><FONT COLOR="#008000">flag</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">longopts</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">longopt_match</FONT><FONT COLOR="#000080">].</FONT><FONT COLOR="#008000">val</FONT><FONT COLOR="#000080">;</FONT>
+            <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+        <FONT COLOR="#000080">}</FONT>
+        <B><FONT COLOR="#000080">else</FONT></B>
+            <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#008000">longopts</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">longopt_match</FONT><FONT COLOR="#000080">].</FONT><FONT COLOR="#008000">val</FONT><FONT COLOR="#000080">;</FONT>
+    <FONT COLOR="#000080">}</FONT>
+    <B><FONT COLOR="#000080">else</FONT></B>
+        <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#008000">optopt</FONT><FONT COLOR="#000080">;</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">getopt_long</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">argc</FONT><FONT COLOR="#000080">,</FONT> <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">**</FONT><FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">,</FONT> <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">shortopts</FONT><FONT COLOR="#000080">,</FONT>
+                 <FONT COLOR="#008000">GETOPT_LONG_OPTION_T</FONT> <FONT COLOR="#000080">*</FONT> <FONT COLOR="#008000">longopts</FONT><FONT COLOR="#000080">,</FONT> <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">longind</FONT><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+    <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#008000">getopt_internal</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">argc</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">shortopts</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">longopts</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">longind</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">);</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+<B><FONT COLOR="#000080">void</FONT></B> <FONT COLOR="#008000">help</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">void</FONT></B><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+    <FONT COLOR="#008000">puts</FONT><FONT COLOR="#000080">(</FONT> <FONT COLOR="#000000">&quot;OPTIONS&quot;</FONT> <FONT COLOR="#000080">);</FONT>
+    <FONT COLOR="#008000">puts</FONT><FONT COLOR="#000080">(</FONT> <FONT COLOR="#000000">&quot;&quot;</FONT> <FONT COLOR="#000080">);</FONT>
+    <FONT COLOR="#008000">puts</FONT><FONT COLOR="#000080">(</FONT> <FONT COLOR="#000000">&quot;-c N, --bytes N         Print last N bytes.  &quot;</FONT>
+                                   <FONT COLOR="#000000">&quot;N is a nonzero integer,&quot;</FONT> <FONT COLOR="#000080">);</FONT>
+    <FONT COLOR="#008000">puts</FONT><FONT COLOR="#000080">(</FONT> <FONT COLOR="#000000">&quot;                        optionally followed by one of &quot;</FONT>
+                                  <FONT COLOR="#000000">&quot;the following&quot;</FONT> <FONT COLOR="#000080">);</FONT>
+    <FONT COLOR="#008000">puts</FONT><FONT COLOR="#000080">(</FONT> <FONT COLOR="#000000">&quot;                        characters:&quot;</FONT> <FONT COLOR="#000080">);</FONT>
+    <FONT COLOR="#008000">puts</FONT><FONT COLOR="#000080">(</FONT> <FONT COLOR="#000000">&quot;&quot;</FONT> <FONT COLOR="#000080">);</FONT>
+    <FONT COLOR="#008000">puts</FONT><FONT COLOR="#000080">(</FONT> <FONT COLOR="#000000">&quot;                        b       512-byte blocks.&quot;</FONT> <FONT COLOR="#000080">);</FONT>
+    <FONT COLOR="#008000">puts</FONT><FONT COLOR="#000080">(</FONT> <FONT COLOR="#000000">&quot;                        k       1-kilobyte blocks.&quot;</FONT> <FONT COLOR="#000080">);</FONT>
+    <FONT COLOR="#008000">puts</FONT><FONT COLOR="#000080">(</FONT> <FONT COLOR="#000000">&quot;                        m       1-megabyte blocks.&quot;</FONT> <FONT COLOR="#000080">);</FONT>
+    <FONT COLOR="#008000">puts</FONT><FONT COLOR="#000080">(</FONT> <FONT COLOR="#000000">&quot;&quot;</FONT> <FONT COLOR="#000080">);</FONT>
+    <FONT COLOR="#008000">puts</FONT><FONT COLOR="#000080">(</FONT> <FONT COLOR="#000000">&quot;-N, -l N, -n N,         Print last N lines.&quot;</FONT> <FONT COLOR="#000080">);</FONT>
+    <FONT COLOR="#008000">puts</FONT><FONT COLOR="#000080">(</FONT> <FONT COLOR="#000000">&quot;--lines N&quot;</FONT> <FONT COLOR="#000080">);</FONT>
+    <FONT COLOR="#008000">puts</FONT><FONT COLOR="#000080">(</FONT> <FONT COLOR="#000000">&quot;&quot;</FONT> <FONT COLOR="#000080">);</FONT>
+    <FONT COLOR="#008000">puts</FONT><FONT COLOR="#000080">(</FONT> <FONT COLOR="#000000">&quot;-q, --quiet,            Never print filename headers.  &quot;</FONT>
+                                   <FONT COLOR="#000000">&quot;Normally, filename&quot;</FONT> <FONT COLOR="#000080">);</FONT>
+    <FONT COLOR="#008000">puts</FONT><FONT COLOR="#000080">(</FONT> <FONT COLOR="#000000">&quot;--silent                headers are printed if and only&quot;</FONT>
+                                   <FONT COLOR="#000000">&quot; if more than one file&quot;</FONT> <FONT COLOR="#000080">);</FONT>
+    <FONT COLOR="#008000">puts</FONT><FONT COLOR="#000080">(</FONT> <FONT COLOR="#000000">&quot;                        is given on the command line.&quot;</FONT> <FONT COLOR="#000080">);</FONT>
+    <FONT COLOR="#008000">puts</FONT><FONT COLOR="#000080">(</FONT> <FONT COLOR="#000000">&quot;&quot;</FONT> <FONT COLOR="#000080">);</FONT>
+    <FONT COLOR="#008000">puts</FONT><FONT COLOR="#000080">(</FONT> <FONT COLOR="#000000">&quot;-v, --verbose           Always print filename headers.&quot;</FONT> <FONT COLOR="#000080">);</FONT>
+    <FONT COLOR="#008000">puts</FONT><FONT COLOR="#000080">(</FONT> <FONT COLOR="#000000">&quot;&quot;</FONT> <FONT COLOR="#000080">);</FONT>
+    <FONT COLOR="#008000">puts</FONT><FONT COLOR="#000080">(</FONT> <FONT COLOR="#000000">&quot;--help                  Print usage message and exit successfully.&quot;</FONT><FONT COLOR="#000080">);</FONT>
+    <FONT COLOR="#008000">puts</FONT><FONT COLOR="#000080">(</FONT> <FONT COLOR="#000000">&quot;&quot;</FONT> <FONT COLOR="#000080">);</FONT>
+    <FONT COLOR="#008000">puts</FONT><FONT COLOR="#000080">(</FONT> <FONT COLOR="#000000">&quot;--version               Print version&quot;</FONT>
+                                <FONT COLOR="#000000">&quot; information and exit successfully.&quot;</FONT> <FONT COLOR="#000080">);</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+<B><FONT COLOR="#000080">void</FONT></B> <FONT COLOR="#008000">version</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">void</FONT></B><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+    <FONT COLOR="#008000">puts</FONT><FONT COLOR="#000080">(</FONT> <FONT COLOR="#000000">&quot;tail - output the last part of files&quot;</FONT> <FONT COLOR="#000080">);</FONT>
+    <FONT COLOR="#008000">puts</FONT><FONT COLOR="#000080">(</FONT> <FONT COLOR="#000000">&quot;Version 1.0&quot;</FONT> <FONT COLOR="#000080">);</FONT>
+    <FONT COLOR="#008000">puts</FONT><FONT COLOR="#000080">(</FONT> <FONT COLOR="#000000">&quot;Written by Gregory Pietsch&quot;</FONT> <FONT COLOR="#000080">);</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+<FONT COLOR="#008080">/* allocate memory, die on error */</FONT>
+<B><FONT COLOR="#000080">void</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">xmalloc</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">size_t</FONT> <FONT COLOR="#008000">n</FONT><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+    <B><FONT COLOR="#000080">void</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">p</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">malloc</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">n</FONT><FONT COLOR="#000080">);</FONT>
+
+    <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">p</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+        <FONT COLOR="#008000">fprintf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">stderr</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000000">&quot;%s: out of memory\n&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">program_name</FONT><FONT COLOR="#000080">);</FONT>
+        <FONT COLOR="#008000">exit</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">EXIT_FAILURE</FONT><FONT COLOR="#000080">);</FONT>
+    <FONT COLOR="#000080">}</FONT>
+    <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#008000">p</FONT><FONT COLOR="#000080">;</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+<FONT COLOR="#008080">/* reallocate memory, die on error */</FONT>
+<B><FONT COLOR="#000080">void</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">xrealloc</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">void</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">p</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">size_t</FONT> <FONT COLOR="#008000">n</FONT><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+    <B><FONT COLOR="#000080">void</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">;</FONT>
+
+    <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">n</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+        <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">p</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">)</FONT>
+            <FONT COLOR="#008000">free</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">p</FONT><FONT COLOR="#000080">);</FONT>
+        <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">;</FONT>
+    <FONT COLOR="#000080">}</FONT>
+    <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">p</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">)</FONT>
+        <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#008000">xmalloc</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">n</FONT><FONT COLOR="#000080">);</FONT>
+    <FONT COLOR="#008000">s</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">realloc</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">p</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">n</FONT><FONT COLOR="#000080">);</FONT>
+    <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">s</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+        <FONT COLOR="#008000">fprintf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">stderr</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000000">&quot;%s: out of memory\n&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">program_name</FONT><FONT COLOR="#000080">);</FONT>
+        <FONT COLOR="#008000">exit</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">EXIT_FAILURE</FONT><FONT COLOR="#000080">);</FONT>
+    <FONT COLOR="#000080">}</FONT>
+    <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">;</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+<FONT COLOR="#008080">/* get string duplicate */</FONT>
+<B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">xstrdup</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+    <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">p</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">xmalloc</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">strlen</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">+</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">);</FONT>
+
+    <FONT COLOR="#008000">strcpy</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">p</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">);</FONT>
+    <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#008000">p</FONT><FONT COLOR="#000080">;</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+<FONT COLOR="#008080">/* queue stuff - get fresh queue */</FONT>
+<FONT COLOR="#008000">LINE_QUEUE_T</FONT> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">lq_create</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">void</FONT></B><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+    <FONT COLOR="#008000">LINE_QUEUE_T</FONT> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">lq</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">xmalloc</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">sizeof</FONT></B> <FONT COLOR="#008000">LINE_QUEUE_T</FONT><FONT COLOR="#000080">);</FONT>
+
+    <FONT COLOR="#008000">lq</FONT><FONT COLOR="#000080">-&gt;</FONT><FONT COLOR="#008000">first</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">;</FONT>
+    <FONT COLOR="#008000">lq</FONT><FONT COLOR="#000080">-&gt;</FONT><FONT COLOR="#008000">last</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">;</FONT>
+    <FONT COLOR="#008000">lq</FONT><FONT COLOR="#000080">-&gt;</FONT><FONT COLOR="#008000">num_elements</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+    <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#008000">lq</FONT><FONT COLOR="#000080">;</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+<FONT COLOR="#008080">/* put an item onto the queue */</FONT>
+<B><FONT COLOR="#000080">void</FONT></B> <FONT COLOR="#008000">lq_enq</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">LINE_QUEUE_T</FONT> <FONT COLOR="#000080">*</FONT> <FONT COLOR="#008000">lq</FONT><FONT COLOR="#000080">,</FONT> <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+    <FONT COLOR="#008000">LINE_QUEUE_EL_T</FONT> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">lq_el</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">xmalloc</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">sizeof</FONT></B> <FONT COLOR="#008000">LINE_QUEUE_EL_T</FONT><FONT COLOR="#000080">);</FONT>
+
+    <FONT COLOR="#008000">lq_el</FONT><FONT COLOR="#000080">-&gt;</FONT><FONT COLOR="#008000">s</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">xstrdup</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">);</FONT>
+    <FONT COLOR="#008000">lq_el</FONT><FONT COLOR="#000080">-&gt;</FONT><FONT COLOR="#008000">next</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">;</FONT>
+    <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">lq</FONT><FONT COLOR="#000080">-&gt;</FONT><FONT COLOR="#008000">first</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#008000">NULL</FONT> <FONT COLOR="#000080">&amp;&amp;</FONT> <FONT COLOR="#008000">lq</FONT><FONT COLOR="#000080">-&gt;</FONT><FONT COLOR="#008000">last</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+        <FONT COLOR="#008080">/* first element */</FONT>
+        <FONT COLOR="#008000">lq</FONT><FONT COLOR="#000080">-&gt;</FONT><FONT COLOR="#008000">first</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">lq</FONT><FONT COLOR="#000080">-&gt;</FONT><FONT COLOR="#008000">last</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">lq_el</FONT><FONT COLOR="#000080">;</FONT>
+        <FONT COLOR="#008000">lq</FONT><FONT COLOR="#000080">-&gt;</FONT><FONT COLOR="#008000">num_elements</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">;</FONT>
+    <FONT COLOR="#000080">}</FONT>
+    <B><FONT COLOR="#000080">else</FONT></B> <FONT COLOR="#000080">{</FONT>
+        <FONT COLOR="#008080">/* tack onto end */</FONT>
+        <FONT COLOR="#008000">lq</FONT><FONT COLOR="#000080">-&gt;</FONT><FONT COLOR="#008000">last</FONT><FONT COLOR="#000080">-&gt;</FONT><FONT COLOR="#008000">next</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">lq_el</FONT><FONT COLOR="#000080">;</FONT>
+        <FONT COLOR="#008000">lq</FONT><FONT COLOR="#000080">-&gt;</FONT><FONT COLOR="#008000">last</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">lq_el</FONT><FONT COLOR="#000080">;</FONT>
+        <FONT COLOR="#008000">lq</FONT><FONT COLOR="#000080">-&gt;</FONT><FONT COLOR="#008000">num_elements</FONT><FONT COLOR="#000080">++;</FONT>
+    <FONT COLOR="#000080">}</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+<FONT COLOR="#008080">/* take an item off the queue */</FONT>
+<B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">lq_deq</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">LINE_QUEUE_T</FONT> <FONT COLOR="#000080">*</FONT> <FONT COLOR="#008000">lq</FONT><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+    <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">;</FONT>
+    <FONT COLOR="#008000">LINE_QUEUE_EL_T</FONT> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">lq_el</FONT><FONT COLOR="#000080">;</FONT>
+
+    <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">lq</FONT><FONT COLOR="#000080">-&gt;</FONT><FONT COLOR="#008000">first</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">)</FONT>
+        <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">;</FONT>
+    <FONT COLOR="#008000">lq_el</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">lq</FONT><FONT COLOR="#000080">-&gt;</FONT><FONT COLOR="#008000">first</FONT><FONT COLOR="#000080">;</FONT>
+    <FONT COLOR="#008000">s</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">lq_el</FONT><FONT COLOR="#000080">-&gt;</FONT><FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">;</FONT>
+    <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">lq</FONT><FONT COLOR="#000080">-&gt;</FONT><FONT COLOR="#008000">first</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#008000">lq</FONT><FONT COLOR="#000080">-&gt;</FONT><FONT COLOR="#008000">last</FONT><FONT COLOR="#000080">)</FONT>
+        <FONT COLOR="#008000">lq</FONT><FONT COLOR="#000080">-&gt;</FONT><FONT COLOR="#008000">first</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">lq</FONT><FONT COLOR="#000080">-&gt;</FONT><FONT COLOR="#008000">last</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">;</FONT>
+    <B><FONT COLOR="#000080">else</FONT></B>
+        <FONT COLOR="#008000">lq</FONT><FONT COLOR="#000080">-&gt;</FONT><FONT COLOR="#008000">first</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">lq</FONT><FONT COLOR="#000080">-&gt;</FONT><FONT COLOR="#008000">first</FONT><FONT COLOR="#000080">-&gt;</FONT><FONT COLOR="#008000">next</FONT><FONT COLOR="#000080">;</FONT>
+    <FONT COLOR="#008000">free</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">lq_el</FONT><FONT COLOR="#000080">);</FONT>
+    <FONT COLOR="#008000">lq</FONT><FONT COLOR="#000080">-&gt;</FONT><FONT COLOR="#008000">num_elements</FONT><FONT COLOR="#000080">--;</FONT>
+    <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">;</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+<FONT COLOR="#008080">/* output number lines -- this function is tough because I can only
+ * use fseek() to rewind a text stream (See ISO C 7.9.9.2 if you don't
+ * believe me).
+ */</FONT>
+<B><FONT COLOR="#000080">void</FONT></B> <FONT COLOR="#008000">tail_lines</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">FILE</FONT> <FONT COLOR="#000080">*</FONT> <FONT COLOR="#008000">f</FONT><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+    <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#008000">buffer</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">TAIL_BUFFER_SIZE</FONT><FONT COLOR="#000080">];</FONT>
+    <FONT COLOR="#008000">size_t</FONT> <FONT COLOR="#008000">num_read</FONT><FONT COLOR="#000080">;</FONT>
+    <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">last_is_nl</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+    <B><FONT COLOR="#000080">unsigned</FONT></B> <B><FONT COLOR="#000080">long</FONT></B> <FONT COLOR="#008000">num_skipped</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+    <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">;</FONT>
+    <FONT COLOR="#008000">LINE_QUEUE_T</FONT> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">lq</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">;</FONT>
+    <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">;</FONT>
+    <FONT COLOR="#008000">size_t</FONT> <FONT COLOR="#008000">s_size</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+    <FONT COLOR="#008000">size_t</FONT> <FONT COLOR="#008000">s_allocked</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+    <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">p</FONT><FONT COLOR="#000080">;</FONT>
+
+    <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">flag_skip</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+        <FONT COLOR="#008080">/* skip a bunch of lines, output everything else */</FONT>
+        <B><FONT COLOR="#000080">while</FONT></B> <FONT COLOR="#000080">((</FONT><FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">getc</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">f</FONT><FONT COLOR="#000080">))</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#008000">EOF</FONT> <FONT COLOR="#000080">&amp;&amp;</FONT> <FONT COLOR="#008000">num_skipped</FONT> <FONT COLOR="#000080">&lt;</FONT> <FONT COLOR="#008000">number</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+            <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'\n'</B></FONT><FONT COLOR="#000080">)</FONT>
+                <FONT COLOR="#008000">num_skipped</FONT><FONT COLOR="#000080">++;</FONT>
+        <FONT COLOR="#000080">}</FONT>
+        <B><FONT COLOR="#000080">while</FONT></B> <FONT COLOR="#000080">((</FONT><FONT COLOR="#008000">num_read</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">fread</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">buffer</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">TAIL_BUFFER_SIZE</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">f</FONT><FONT COLOR="#000080">))</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+            <FONT COLOR="#008000">fwrite</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">buffer</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">num_read</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">stdout</FONT><FONT COLOR="#000080">);</FONT>
+            <FONT COLOR="#008000">last_is_nl</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">buffer</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">num_read</FONT> <FONT COLOR="#000080">-</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'\n'</B></FONT><FONT COLOR="#000080">);</FONT>
+        <FONT COLOR="#000080">}</FONT>
+        <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(!</FONT><FONT COLOR="#008000">last_is_nl</FONT><FONT COLOR="#000080">)</FONT>
+            <FONT COLOR="#008000">fputc</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000"><B>'\n'</B></FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">stdout</FONT><FONT COLOR="#000080">);</FONT>
+    <FONT COLOR="#000080">}</FONT>
+    <B><FONT COLOR="#000080">else</FONT></B> <FONT COLOR="#000080">{</FONT>
+        <FONT COLOR="#008000">lq</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">lq_create</FONT><FONT COLOR="#000080">();</FONT>
+        <FONT COLOR="#008000">s</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">xmalloc</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">TAIL_STRING_BUFFER_SIZE</FONT><FONT COLOR="#000080">);</FONT>
+        <FONT COLOR="#008000">s_allocked</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">TAIL_STRING_BUFFER_SIZE</FONT><FONT COLOR="#000080">;</FONT>
+        <B><FONT COLOR="#000080">while</FONT></B> <FONT COLOR="#000080">((</FONT><FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">getc</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">f</FONT><FONT COLOR="#000080">))</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#008000">EOF</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+            <FONT COLOR="#008080">/* add to s, if not at eof or end of line */</FONT>
+            <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#000000"><B>'\n'</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+                <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">s_size</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#008000">s_allocked</FONT> <FONT COLOR="#000080">-</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+                    <FONT COLOR="#008000">s_allocked</FONT> <FONT COLOR="#000080">+=</FONT> <FONT COLOR="#008000">TAIL_STRING_BUFFER_SIZE</FONT><FONT COLOR="#000080">;</FONT>
+                    <FONT COLOR="#008000">s</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">xrealloc</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">s_allocked</FONT><FONT COLOR="#000080">);</FONT>
+                <FONT COLOR="#000080">}</FONT>
+                <FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">s_size</FONT><FONT COLOR="#000080">++]</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">;</FONT>
+            <FONT COLOR="#000080">}</FONT>
+            <B><FONT COLOR="#000080">else</FONT></B> <FONT COLOR="#000080">{</FONT>
+                <FONT COLOR="#008080">/* enqueue s, possibly dequeueing if we don't need a
+line */</FONT>
+                <FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">s_size</FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>'\0'</B></FONT><FONT COLOR="#000080">;</FONT>
+                <FONT COLOR="#008000">lq_enq</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">lq</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">);</FONT>
+                <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">lq</FONT><FONT COLOR="#000080">-&gt;</FONT><FONT COLOR="#008000">num_elements</FONT> <FONT COLOR="#000080">&gt;</FONT> <FONT COLOR="#008000">number</FONT><FONT COLOR="#000080">)</FONT>
+                    <FONT COLOR="#008000">free</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">lq_deq</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">lq</FONT><FONT COLOR="#000080">));</FONT>
+                <FONT COLOR="#008000">s_size</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+            <FONT COLOR="#000080">}</FONT>
+        <FONT COLOR="#000080">}</FONT>
+        <B><FONT COLOR="#000080">while</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">lq</FONT><FONT COLOR="#000080">-&gt;</FONT><FONT COLOR="#008000">num_elements</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+            <FONT COLOR="#008080">/* print out strings */</FONT>
+            <FONT COLOR="#008000">p</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">lq_deq</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">lq</FONT><FONT COLOR="#000080">);</FONT>
+            <FONT COLOR="#008000">puts</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">p</FONT><FONT COLOR="#000080">);</FONT>
+            <FONT COLOR="#008000">free</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">p</FONT><FONT COLOR="#000080">);</FONT>
+        <FONT COLOR="#000080">}</FONT>
+        <FONT COLOR="#008000">free</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">);</FONT>
+        <FONT COLOR="#008000">free</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">lq</FONT><FONT COLOR="#000080">);</FONT>
+    <FONT COLOR="#000080">}</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+<FONT COLOR="#008080">/* output number characters, or skip over number characters */</FONT>
+<B><FONT COLOR="#000080">void</FONT></B> <FONT COLOR="#008000">tail_chars</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">FILE</FONT> <FONT COLOR="#000080">*</FONT> <FONT COLOR="#008000">f</FONT><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+    <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#008000">buffer</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">TAIL_BUFFER_SIZE</FONT><FONT COLOR="#000080">];</FONT>
+    <FONT COLOR="#008000">size_t</FONT> <FONT COLOR="#008000">num_read</FONT><FONT COLOR="#000080">;</FONT>
+    <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">last_is_nl</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+    <B><FONT COLOR="#000080">long</FONT></B> <FONT COLOR="#008000">lnum</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">number</FONT><FONT COLOR="#000080">;</FONT>
+
+    <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">flag_skip</FONT><FONT COLOR="#000080">)</FONT>
+        <FONT COLOR="#008000">fseek</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">f</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">lnum</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">SEEK_SET</FONT><FONT COLOR="#000080">);</FONT>
+    <B><FONT COLOR="#000080">else</FONT></B>
+        <FONT COLOR="#008000">fseek</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">f</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000080">-</FONT><FONT COLOR="#008000">lnum</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">SEEK_END</FONT><FONT COLOR="#000080">);</FONT>
+    <B><FONT COLOR="#000080">while</FONT></B> <FONT COLOR="#000080">((</FONT><FONT COLOR="#008000">num_read</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">fread</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">buffer</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">TAIL_BUFFER_SIZE</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">f</FONT><FONT COLOR="#000080">))</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+        <FONT COLOR="#008000">fwrite</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">buffer</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">num_read</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">stdout</FONT><FONT COLOR="#000080">);</FONT>
+        <FONT COLOR="#008000">last_is_nl</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">buffer</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">num_read</FONT> <FONT COLOR="#000080">-</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'\n'</B></FONT><FONT COLOR="#000080">);</FONT>
+    <FONT COLOR="#000080">}</FONT>
+    <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(!</FONT><FONT COLOR="#008000">last_is_nl</FONT><FONT COLOR="#000080">)</FONT>
+        <FONT COLOR="#008000">fputc</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000"><B>'\n'</B></FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">stdout</FONT><FONT COLOR="#000080">);</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+<B><FONT COLOR="#000080">void</FONT></B> <FONT COLOR="#008000">parse_args</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">argc</FONT><FONT COLOR="#000080">,</FONT> <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">**</FONT><FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+    <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">opt</FONT><FONT COLOR="#000080">;</FONT>
+    <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">p</FONT><FONT COLOR="#000080">;</FONT>
+    <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">flag_found_number</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+    <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">verbosity_changed</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+
+    <B><FONT COLOR="#000080">do</FONT></B> <FONT COLOR="#000080">{</FONT>
+        <B><FONT COLOR="#000080">switch</FONT></B> <FONT COLOR="#000080">((</FONT><FONT COLOR="#008000">opt</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">getopt_long</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">argc</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">shortopts</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">longopts</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">)))</FONT> <FONT COLOR="#000080">{</FONT>
+        <B><FONT COLOR="#000080">case</FONT></B> <FONT COLOR="#000000"><B>'c'</B></FONT><FONT COLOR="#000080">:</FONT>               <FONT COLOR="#008080">/* print bytes */</FONT>
+            <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">flag_found_number</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+                <FONT COLOR="#008000">fprintf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">stderr</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000000">&quot;%s: invalid arguments\s&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">program_name</FONT><FONT COLOR="#000080">);</FONT>
+                <FONT COLOR="#008000">abort</FONT><FONT COLOR="#000080">();</FONT>
+            <FONT COLOR="#000080">}</FONT>
+            <FONT COLOR="#008000">flag_bytes</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">;</FONT>
+            <FONT COLOR="#008000">p</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">optarg</FONT><FONT COLOR="#000080">;</FONT>
+            <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(*</FONT><FONT COLOR="#008000">p</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'+'</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+                <FONT COLOR="#008000">flag_skip</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">;</FONT>
+                <FONT COLOR="#008000">p</FONT><FONT COLOR="#000080">++;</FONT>
+            <FONT COLOR="#000080">}</FONT>
+            <B><FONT COLOR="#000080">for</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">number</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+                 <FONT COLOR="#008000">isdigit</FONT><FONT COLOR="#000080">(*</FONT><FONT COLOR="#008000">p</FONT><FONT COLOR="#000080">);</FONT>
+                 <FONT COLOR="#008000">number</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">number</FONT> <FONT COLOR="#000080">*</FONT> <FONT COLOR="#000000"><B>10</B></FONT> <FONT COLOR="#000080">+</FONT> <FONT COLOR="#000080">(*</FONT><FONT COLOR="#008000">p</FONT><FONT COLOR="#000080">++</FONT> <FONT COLOR="#000080">-</FONT> <FONT COLOR="#000000"><B>'0'</B></FONT><FONT COLOR="#000080">));</FONT>
+            <B><FONT COLOR="#000080">switch</FONT></B> <FONT COLOR="#000080">(*</FONT><FONT COLOR="#008000">p</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+            <B><FONT COLOR="#000080">case</FONT></B> <FONT COLOR="#000000"><B>'b'</B></FONT><FONT COLOR="#000080">:</FONT>           <FONT COLOR="#008080">/* 512-byte blocks */</FONT>
+                <FONT COLOR="#008000">number</FONT> <FONT COLOR="#000080">*=</FONT> <FONT COLOR="#000000"><B>512</B></FONT><FONT COLOR="#000080">;</FONT>
+                <B><FONT COLOR="#000080">break</FONT></B><FONT COLOR="#000080">;</FONT>
+            <B><FONT COLOR="#000080">case</FONT></B> <FONT COLOR="#000000"><B>'k'</B></FONT><FONT COLOR="#000080">:</FONT>           <FONT COLOR="#008080">/* kilobyte blocks */</FONT>
+                <FONT COLOR="#008000">number</FONT> <FONT COLOR="#000080">*=</FONT> <FONT COLOR="#000000"><B>1024</B></FONT><FONT COLOR="#000080">;</FONT>
+                <B><FONT COLOR="#000080">break</FONT></B><FONT COLOR="#000080">;</FONT>
+            <B><FONT COLOR="#000080">case</FONT></B> <FONT COLOR="#000000"><B>'m'</B></FONT><FONT COLOR="#000080">:</FONT>           <FONT COLOR="#008080">/* megabyte blocks */</FONT>
+                <FONT COLOR="#008000">number</FONT> <FONT COLOR="#000080">*=</FONT> <FONT COLOR="#000000"><B>1048576</B></FONT><FONT COLOR="#000080">;</FONT>
+                <B><FONT COLOR="#000080">break</FONT></B><FONT COLOR="#000080">;</FONT>
+            <B><FONT COLOR="#000080">default</FONT></B><FONT COLOR="#000080">:</FONT>
+                <B><FONT COLOR="#000080">break</FONT></B><FONT COLOR="#000080">;</FONT>
+            <FONT COLOR="#000080">}</FONT>
+            <FONT COLOR="#008000">flag_found_number</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">;</FONT>
+            <B><FONT COLOR="#000080">break</FONT></B><FONT COLOR="#000080">;</FONT>
+        <B><FONT COLOR="#000080">case</FONT></B> <FONT COLOR="#000000"><B>'l'</B></FONT><FONT COLOR="#000080">:</FONT>
+        <B><FONT COLOR="#000080">case</FONT></B> <FONT COLOR="#000000"><B>'n'</B></FONT><FONT COLOR="#000080">:</FONT>               <FONT COLOR="#008080">/* lines */</FONT>
+            <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">flag_found_number</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+                <FONT COLOR="#008000">fprintf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">stderr</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000000">&quot;%s: invalid arguments\s&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">program_name</FONT><FONT COLOR="#000080">);</FONT>
+                <FONT COLOR="#008000">abort</FONT><FONT COLOR="#000080">();</FONT>
+            <FONT COLOR="#000080">}</FONT>
+            <FONT COLOR="#008000">flag_bytes</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+            <FONT COLOR="#008000">p</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">optarg</FONT><FONT COLOR="#000080">;</FONT>
+            <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(*</FONT><FONT COLOR="#008000">p</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'+'</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+                <FONT COLOR="#008000">flag_skip</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">;</FONT>
+                <FONT COLOR="#008000">p</FONT><FONT COLOR="#000080">++;</FONT>
+            <FONT COLOR="#000080">}</FONT>
+            <FONT COLOR="#008000">number</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">strtoul</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">p</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000000"><B>10</B></FONT><FONT COLOR="#000080">);</FONT>
+            <FONT COLOR="#008000">flag_found_number</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">;</FONT>
+            <B><FONT COLOR="#000080">break</FONT></B><FONT COLOR="#000080">;</FONT>
+        <B><FONT COLOR="#000080">case</FONT></B> <FONT COLOR="#000000"><B>'q'</B></FONT><FONT COLOR="#000080">:</FONT>               <FONT COLOR="#008080">/* quiet */</FONT>
+            <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">verbosity_changed</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+                <FONT COLOR="#008000">fprintf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">stderr</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000000">&quot;%s: invalid arguments\s&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">program_name</FONT><FONT COLOR="#000080">);</FONT>
+                <FONT COLOR="#008000">abort</FONT><FONT COLOR="#000080">();</FONT>
+            <FONT COLOR="#000080">}</FONT>
+            <FONT COLOR="#008000">verbosity_changed</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">;</FONT>
+            <FONT COLOR="#008000">flag_verbosity</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">NEVER</FONT><FONT COLOR="#000080">;</FONT>
+            <B><FONT COLOR="#000080">break</FONT></B><FONT COLOR="#000080">;</FONT>
+        <B><FONT COLOR="#000080">case</FONT></B> <FONT COLOR="#000000"><B>'v'</B></FONT><FONT COLOR="#000080">:</FONT>               <FONT COLOR="#008080">/* verbose */</FONT>
+            <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">verbosity_changed</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+                <FONT COLOR="#008000">fprintf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">stderr</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000000">&quot;%s: invalid arguments\s&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">program_name</FONT><FONT COLOR="#000080">);</FONT>
+                <FONT COLOR="#008000">abort</FONT><FONT COLOR="#000080">();</FONT>
+            <FONT COLOR="#000080">}</FONT>
+            <FONT COLOR="#008000">verbosity_changed</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">;</FONT>
+            <FONT COLOR="#008000">flag_verbosity</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">ALWAYS</FONT><FONT COLOR="#000080">;</FONT>
+            <B><FONT COLOR="#000080">break</FONT></B><FONT COLOR="#000080">;</FONT>
+        <B><FONT COLOR="#000080">case</FONT></B> <FONT COLOR="#000000"><B>'?'</B></FONT><FONT COLOR="#000080">:</FONT>               <FONT COLOR="#008080">/* invalid option */</FONT>
+            <FONT COLOR="#008000">fprintf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">stderr</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000000">&quot;For help, type:\n\t%s --help\n&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">program_name</FONT><FONT COLOR="#000080">);</FONT>
+            <FONT COLOR="#008000">exit</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">EXIT_FAILURE</FONT><FONT COLOR="#000080">);</FONT>
+        <B><FONT COLOR="#000080">case</FONT></B> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">:</FONT>
+        <B><FONT COLOR="#000080">case</FONT></B> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">:</FONT>
+            <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">show_help</FONT> <FONT COLOR="#000080">||</FONT> <FONT COLOR="#008000">show_version</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+                <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">show_help</FONT><FONT COLOR="#000080">)</FONT>
+                    <FONT COLOR="#008000">help</FONT><FONT COLOR="#000080">();</FONT>
+                <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">show_version</FONT><FONT COLOR="#000080">)</FONT>
+                    <FONT COLOR="#008000">version</FONT><FONT COLOR="#000080">();</FONT>
+                <FONT COLOR="#008000">exit</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">EXIT_SUCCESS</FONT><FONT COLOR="#000080">);</FONT>
+            <FONT COLOR="#000080">}</FONT>
+            <B><FONT COLOR="#000080">break</FONT></B><FONT COLOR="#000080">;</FONT>
+        <B><FONT COLOR="#000080">default</FONT></B><FONT COLOR="#000080">:</FONT>
+            <B><FONT COLOR="#000080">break</FONT></B><FONT COLOR="#000080">;</FONT>
+        <FONT COLOR="#000080">}</FONT>
+    <FONT COLOR="#000080">}</FONT> <B><FONT COLOR="#000080">while</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">opt</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#008000">EOF</FONT><FONT COLOR="#000080">);</FONT>
+    <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">flag_found_number</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>0</B></FONT> <FONT COLOR="#000080">||</FONT> <FONT COLOR="#008000">number</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+        <FONT COLOR="#008080">/* didn't find anything, so set default */</FONT>
+        <FONT COLOR="#008000">flag_bytes</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+        <FONT COLOR="#008000">number</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>10</B></FONT><FONT COLOR="#000080">;</FONT>
+    <FONT COLOR="#000080">}</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">main</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">argc</FONT><FONT COLOR="#000080">,</FONT> <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">**</FONT><FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+    <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">;</FONT>
+    <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">j</FONT><FONT COLOR="#000080">;</FONT>
+    <B><FONT COLOR="#000080">unsigned</FONT></B> <B><FONT COLOR="#000080">long</FONT></B> <FONT COLOR="#008000">ul</FONT><FONT COLOR="#000080">;</FONT>
+    <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">**</FONT><FONT COLOR="#008000">new_argv</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">xmalloc</FONT><FONT COLOR="#000080">((</FONT><FONT COLOR="#008000">argc</FONT> <FONT COLOR="#000080">+</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">*</FONT> <FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">sizeof</FONT></B><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*)));</FONT>
+    <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">allocked_argvs</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">xmalloc</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">argc</FONT> <FONT COLOR="#000080">+</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">);</FONT>
+    <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">p</FONT><FONT COLOR="#000080">;</FONT>
+    <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">;</FONT>
+    <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">t</FONT><FONT COLOR="#000080">;</FONT>
+    <FONT COLOR="#008000">FILE</FONT> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">f</FONT><FONT COLOR="#000080">;</FONT>
+    <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">flag_plus</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+
+    <FONT COLOR="#008000">memset</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">allocked_argvs</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">argc</FONT> <FONT COLOR="#000080">+</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">);</FONT>
+    <FONT COLOR="#008000">new_argv</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">program_name</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">];</FONT>
+    <FONT COLOR="#008080">/* deal with silly old-format arguments */</FONT>
+    <B><FONT COLOR="#000080">for</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">i</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">j</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008000">i</FONT> <FONT COLOR="#000080">&lt;</FONT> <FONT COLOR="#008000">argc</FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">++)</FONT> <FONT COLOR="#000080">{</FONT>
+        <FONT COLOR="#008000">p</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">];</FONT>
+        <FONT COLOR="#008000">flag_plus</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+        <FONT COLOR="#008080">/* handle options first */</FONT>
+        <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(*</FONT><FONT COLOR="#008000">p</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'-'</B></FONT> <FONT COLOR="#000080">||</FONT> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">p</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'+'</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+            <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">isdigit</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">p</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">])</FONT> <FONT COLOR="#000080">||</FONT> <FONT COLOR="#008000">p</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'+'</B></FONT> <FONT COLOR="#000080">||</FONT> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">p</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'+'</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+                <FONT COLOR="#008080">/* rearrange p */</FONT>
+                <FONT COLOR="#008000">s</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">xmalloc</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">strlen</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">p</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">+</FONT> <FONT COLOR="#000000"><B>3</B></FONT><FONT COLOR="#000080">);</FONT>
+                <FONT COLOR="#008000">t</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">;</FONT>
+                <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">t</FONT><FONT COLOR="#000080">++</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>'-'</B></FONT><FONT COLOR="#000080">;</FONT>
+                <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(*</FONT><FONT COLOR="#008000">p</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'-'</B></FONT><FONT COLOR="#000080">)</FONT>
+                    <FONT COLOR="#008000">p</FONT><FONT COLOR="#000080">++;</FONT>
+                <FONT COLOR="#008000">ul</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+                <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(*</FONT><FONT COLOR="#008000">p</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'+'</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+                    <FONT COLOR="#008000">flag_plus</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">;</FONT>
+                    <FONT COLOR="#008000">p</FONT><FONT COLOR="#000080">++;</FONT>
+                <FONT COLOR="#000080">}</FONT>
+                <B><FONT COLOR="#000080">while</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">isdigit</FONT><FONT COLOR="#000080">(*</FONT><FONT COLOR="#008000">p</FONT><FONT COLOR="#000080">))</FONT> <FONT COLOR="#000080">{</FONT>
+                    <FONT COLOR="#008000">ul</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">ul</FONT> <FONT COLOR="#000080">*</FONT> <FONT COLOR="#000000"><B>10</B></FONT> <FONT COLOR="#000080">+</FONT> <FONT COLOR="#000080">(*</FONT><FONT COLOR="#008000">p</FONT> <FONT COLOR="#000080">-</FONT> <FONT COLOR="#000000"><B>'0'</B></FONT><FONT COLOR="#000080">);</FONT>
+                    <FONT COLOR="#008000">p</FONT><FONT COLOR="#000080">++;</FONT>
+                <FONT COLOR="#000080">}</FONT>
+                <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">strchr</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">p</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000000"><B>'q'</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">)</FONT>
+                    <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">t</FONT><FONT COLOR="#000080">++</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>'q'</B></FONT><FONT COLOR="#000080">;</FONT>
+                <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">strchr</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">p</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000000"><B>'v'</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">)</FONT>
+                    <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">t</FONT><FONT COLOR="#000080">++</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>'v'</B></FONT><FONT COLOR="#000080">;</FONT>
+                <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">strpbrk</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">p</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000000">&quot;cbkm&quot;</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">)</FONT>
+                    <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">t</FONT><FONT COLOR="#000080">++</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>'c'</B></FONT><FONT COLOR="#000080">;</FONT>
+                <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">strchr</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">p</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000000"><B>'l'</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">)</FONT>
+                    <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">t</FONT><FONT COLOR="#000080">++</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>'l'</B></FONT><FONT COLOR="#000080">;</FONT>
+                <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">strchr</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">p</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000000"><B>'n'</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#008000">NULL</FONT> <FONT COLOR="#000080">||</FONT> <FONT COLOR="#008000">t</FONT><FONT COLOR="#000080">[-</FONT><FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'-'</B></FONT><FONT COLOR="#000080">)</FONT>
+                    <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">t</FONT><FONT COLOR="#000080">++</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>'n'</B></FONT><FONT COLOR="#000080">;</FONT>
+                <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">flag_plus</FONT><FONT COLOR="#000080">)</FONT>
+                    <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">t</FONT><FONT COLOR="#000080">++</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>'+'</B></FONT><FONT COLOR="#000080">;</FONT>
+                <FONT COLOR="#008000">sprintf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">t</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000000">&quot;%lu&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">ul</FONT><FONT COLOR="#000080">);</FONT>
+                <FONT COLOR="#008000">t</FONT> <FONT COLOR="#000080">+=</FONT> <FONT COLOR="#008000">strlen</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">t</FONT><FONT COLOR="#000080">);</FONT>
+                <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">strchr</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">p</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000000"><B>'b'</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">)</FONT>
+                    <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">t</FONT><FONT COLOR="#000080">++</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>'b'</B></FONT><FONT COLOR="#000080">;</FONT>
+                <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">strchr</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">p</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000000"><B>'k'</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">)</FONT>
+                    <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">t</FONT><FONT COLOR="#000080">++</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>'k'</B></FONT><FONT COLOR="#000080">;</FONT>
+                <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">strchr</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">p</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000000"><B>'m'</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">)</FONT>
+                    <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">t</FONT><FONT COLOR="#000080">++</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>'m'</B></FONT><FONT COLOR="#000080">;</FONT>
+                <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">t</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>'\0'</B></FONT><FONT COLOR="#000080">;</FONT>
+                <FONT COLOR="#008000">new_argv</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">j</FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">;</FONT>
+                <FONT COLOR="#008000">allocked_argvs</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">j</FONT><FONT COLOR="#000080">++]</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">;</FONT>
+            <FONT COLOR="#000080">}</FONT>
+            <B><FONT COLOR="#000080">else</FONT></B>
+                <FONT COLOR="#008000">new_argv</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">j</FONT><FONT COLOR="#000080">++]</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">];</FONT>
+        <FONT COLOR="#000080">}</FONT>
+    <FONT COLOR="#000080">}</FONT>
+    <B><FONT COLOR="#000080">for</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">i</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008000">i</FONT> <FONT COLOR="#000080">&lt;</FONT> <FONT COLOR="#008000">argc</FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">++)</FONT> <FONT COLOR="#000080">{</FONT>
+        <FONT COLOR="#008080">/* handle file names */</FONT>
+        <FONT COLOR="#008000">p</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">];</FONT>
+        <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(*</FONT><FONT COLOR="#008000">p</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#000000"><B>'-'</B></FONT><FONT COLOR="#000080">)</FONT>
+            <FONT COLOR="#008000">new_argv</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">j</FONT><FONT COLOR="#000080">++]</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">p</FONT><FONT COLOR="#000080">;</FONT>
+    <FONT COLOR="#000080">}</FONT>
+    <FONT COLOR="#008000">new_argv</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">argc</FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">;</FONT>
+    <FONT COLOR="#008000">parse_args</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">argc</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">new_argv</FONT><FONT COLOR="#000080">);</FONT>
+    <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">optind</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#008000">argc</FONT>
+        <FONT COLOR="#000080">||</FONT> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">optind</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#008000">argc</FONT> <FONT COLOR="#000080">-</FONT> <FONT COLOR="#000000"><B>1</B></FONT> <FONT COLOR="#000080">&amp;&amp;</FONT> <FONT COLOR="#008000">strcmp</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">optind</FONT><FONT COLOR="#000080">],</FONT> <FONT COLOR="#000000">&quot;-&quot;</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">))</FONT> <FONT COLOR="#000080">{</FONT>
+        <FONT COLOR="#008080">/* no more argv-elements, tail stdin */</FONT>
+        <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">flag_verbosity</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#008000">ALWAYS</FONT><FONT COLOR="#000080">)</FONT>
+            <FONT COLOR="#008000">puts</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;==&gt; standard input &lt;==&quot;</FONT><FONT COLOR="#000080">);</FONT>
+        <FONT COLOR="#008000">flag_bytes</FONT> <FONT COLOR="#000080">?</FONT> <FONT COLOR="#008000">tail_chars</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">stdin</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">:</FONT> <FONT COLOR="#008000">tail_lines</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">stdin</FONT><FONT COLOR="#000080">);</FONT>
+    <FONT COLOR="#000080">}</FONT>
+    <B><FONT COLOR="#000080">else</FONT></B> <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">optind</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#008000">argc</FONT> <FONT COLOR="#000080">-</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+        <FONT COLOR="#008080">/* one file */</FONT>
+        <FONT COLOR="#008000">f</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">fopen</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">new_argv</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">optind</FONT><FONT COLOR="#000080">],</FONT> <FONT COLOR="#008000">flag_bytes</FONT> <FONT COLOR="#000080">?</FONT> <FONT COLOR="#000000">&quot;rb&quot;</FONT> <FONT COLOR="#000080">:</FONT> <FONT COLOR="#000000">&quot;r&quot;</FONT><FONT COLOR="#000080">);</FONT>
+        <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">f</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+            <FONT COLOR="#008000">fprintf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">stderr</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000000">&quot;%s: Can't open file %s\n&quot;</FONT><FONT COLOR="#000080">,</FONT>
+                    <FONT COLOR="#008000">program_name</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">new_argv</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">optind</FONT><FONT COLOR="#000080">]);</FONT>
+            <FONT COLOR="#008000">abort</FONT><FONT COLOR="#000080">();</FONT>
+        <FONT COLOR="#000080">}</FONT>
+        <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">flag_verbosity</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#008000">ALWAYS</FONT><FONT COLOR="#000080">)</FONT>
+            <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;==&gt; %s &lt;==\n&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">new_argv</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">optind</FONT><FONT COLOR="#000080">]);</FONT>
+        <FONT COLOR="#008000">flag_bytes</FONT> <FONT COLOR="#000080">?</FONT> <FONT COLOR="#008000">tail_chars</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">f</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">:</FONT> <FONT COLOR="#008000">tail_lines</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">f</FONT><FONT COLOR="#000080">);</FONT>
+        <FONT COLOR="#008000">fclose</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">f</FONT><FONT COLOR="#000080">);</FONT>
+    <FONT COLOR="#000080">}</FONT>
+    <B><FONT COLOR="#000080">else</FONT></B> <FONT COLOR="#000080">{</FONT>
+        <FONT COLOR="#008080">/* multiple files */</FONT>
+        <B><FONT COLOR="#000080">for</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">i</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">optind</FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008000">i</FONT> <FONT COLOR="#000080">&lt;</FONT> <FONT COLOR="#008000">argc</FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">++)</FONT> <FONT COLOR="#000080">{</FONT>
+            <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">strcmp</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">new_argv</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">],</FONT> <FONT COLOR="#000000">&quot;-&quot;</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+                <FONT COLOR="#008000">f</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">stdin</FONT><FONT COLOR="#000080">;</FONT>
+                <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">flag_verbosity</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#008000">NEVER</FONT><FONT COLOR="#000080">)</FONT>
+                    <FONT COLOR="#008000">puts</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;==&gt; standard input &lt;==&quot;</FONT><FONT COLOR="#000080">);</FONT>
+            <FONT COLOR="#000080">}</FONT>
+            <B><FONT COLOR="#000080">else</FONT></B> <FONT COLOR="#000080">{</FONT>
+                <FONT COLOR="#008000">f</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">fopen</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">new_argv</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">],</FONT> <FONT COLOR="#008000">flag_bytes</FONT> <FONT COLOR="#000080">?</FONT> <FONT COLOR="#000000">&quot;rb&quot;</FONT> <FONT COLOR="#000080">:</FONT> <FONT COLOR="#000000">&quot;r&quot;</FONT><FONT COLOR="#000080">);</FONT>
+                <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">f</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+                    <FONT COLOR="#008000">fprintf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">stderr</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000000">&quot;%s: can't open %s\n&quot;</FONT><FONT COLOR="#000080">,</FONT>
+                            <FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">],</FONT> <FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">]);</FONT>
+                    <FONT COLOR="#008000">abort</FONT><FONT COLOR="#000080">();</FONT>
+                <FONT COLOR="#000080">}</FONT>
+                <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">flag_verbosity</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#008000">NEVER</FONT><FONT COLOR="#000080">)</FONT>
+                    <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;==&gt; %s &lt;==\n&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">new_argv</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">]);</FONT>
+            <FONT COLOR="#000080">}</FONT>
+            <FONT COLOR="#008000">flag_bytes</FONT> <FONT COLOR="#000080">?</FONT> <FONT COLOR="#008000">tail_chars</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">f</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">:</FONT> <FONT COLOR="#008000">tail_lines</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">f</FONT><FONT COLOR="#000080">);</FONT>
+            <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">f</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#008000">stdin</FONT><FONT COLOR="#000080">)</FONT>
+                <FONT COLOR="#008000">fclose</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">f</FONT><FONT COLOR="#000080">);</FONT>
+        <FONT COLOR="#000080">}</FONT>
+    <FONT COLOR="#000080">}</FONT>
+    <FONT COLOR="#008080">/* free all we can */</FONT>
+    <B><FONT COLOR="#000080">for</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">i</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008000">i</FONT> <FONT COLOR="#000080">&lt;=</FONT> <FONT COLOR="#008000">argc</FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">++)</FONT>
+        <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">allocked_argvs</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">])</FONT>
+            <FONT COLOR="#008000">free</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">new_argv</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">]);</FONT>
+    <FONT COLOR="#008000">free</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">allocked_argvs</FONT><FONT COLOR="#000080">);</FONT>
+    <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#008000">EXIT_SUCCESS</FONT><FONT COLOR="#000080">;</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+<FONT COLOR="#008080">/* END OF FILE tail.c */</FONT>
+
+</pre>
+</code>
+
+<br>
+<br>
+<br>
+<br>
+Steven Huang's solution
+<br>
+<code>
+<pre>
+<FONT COLOR="#008080">/* K&amp;R Exercise 5-13 */</FONT>
+<FONT COLOR="#008080">/* Steven Huang */</FONT>
+
+<FONT COLOR="#0000FF"><B>#include &lt;stdio.h&gt;</B></FONT>
+<FONT COLOR="#0000FF"><B>#include &lt;stdlib.h&gt;</B></FONT>
+<FONT COLOR="#0000FF"><B>#include &lt;string.h&gt;</B></FONT>
+
+<FONT COLOR="#0000FF"><B>#define DEFAULT_NUM_LINES      10</B></FONT>
+<FONT COLOR="#0000FF"><B>#define MAX_LINE_LEN           1000</B></FONT>
+
+<FONT COLOR="#008080">/*
+   Points of interest for a novice:
+
+   1.  atoi() has a normally annoying property of not being able to
+       tell the caller conclusively whether the input was bad (&quot;abc&quot;)
+       or it was really zero (&quot;0&quot;), because it returns 0 for both    
+       cases.  Here, we exploit that property, because we only want
+       to accept options in the form of &quot;-n&quot;.                      
+
+   2.  Try to understand how this program deals with input that
+       doesn't even have as many lines as the line_ptrs[] array.
+       That is, how does this program degenerate into just displaying
+       everything it read?  (Hint:  what does it mean when line_ptrs[x]
+       is NULL?)                                                       
+
+   3.  Using modulo arithmetic on an index to a circular array is
+       a common and useful technique.  Try to understand the range      
+       of values that current_line (and j, later) will take.  In
+       particular, why shouldn't we just do this:
+
+       for (i = 0; i &lt; num_lines; i++)
+         if (line_ptrs[i])    
+           printf(&quot;%s&quot;, line_ptrs[i]);
+
+   4.  Why do we still use a &quot;%s&quot; to display what's inside line_ptrs,
+       rather than just:
+
+       printf(line_ptrs[i]);
+   
+   5.  There is a bug in this program, where you see:
+
+       numlines = -numlines;
+
+       When will this break?
+*/</FONT> 
+
+<FONT COLOR="#008080">/* K&amp;R2 p29 */</FONT>
+<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">getline</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">[],</FONT> <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">lim</FONT><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+  <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">;</FONT>
+
+  <B><FONT COLOR="#000080">for</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">i</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008000">i</FONT> <FONT COLOR="#000080">&lt;</FONT> <FONT COLOR="#008000">lim</FONT> <FONT COLOR="#000080">-</FONT> <FONT COLOR="#000000"><B>1</B></FONT> <FONT COLOR="#000080">&amp;&amp;</FONT> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">getchar</FONT><FONT COLOR="#000080">())</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#008000">EOF</FONT> <FONT COLOR="#000080">&amp;&amp;</FONT> <FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#000000"><B>'\n'</B></FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">++)</FONT>
+    <FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">;</FONT>
+  <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'\n'</B></FONT><FONT COLOR="#000080">)</FONT>
+    <FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">++]</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">;</FONT>
+  <FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>'\0'</B></FONT><FONT COLOR="#000080">;</FONT>
+  <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">;</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+<FONT COLOR="#008080">/* duplicates a string */</FONT>
+<B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">dupstr</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">const</FONT></B> <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+  <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">p</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">malloc</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">strlen</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">+</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">);</FONT> 
+
+  <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">p</FONT><FONT COLOR="#000080">)</FONT>
+    <FONT COLOR="#008000">strcpy</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">p</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">);</FONT>
+  <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#008000">p</FONT><FONT COLOR="#000080">;</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">main</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">argc</FONT><FONT COLOR="#000080">,</FONT> <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">[])</FONT>
+<FONT COLOR="#000080">{</FONT>
+  <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">num_lines</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">DEFAULT_NUM_LINES</FONT><FONT COLOR="#000080">;</FONT>
+  <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">**</FONT><FONT COLOR="#008000">line_ptrs</FONT><FONT COLOR="#000080">;</FONT>
+  <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#008000">buffer</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">MAX_LINE_LEN</FONT><FONT COLOR="#000080">];</FONT>
+  <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">;</FONT>
+  <B><FONT COLOR="#000080">unsigned</FONT></B> <FONT COLOR="#008000">j</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">current_line</FONT><FONT COLOR="#000080">;</FONT>
+
+  <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">argc</FONT> <FONT COLOR="#000080">&gt;</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>                                                      
+    <FONT COLOR="#008080">/*           
+       We use a little trick here.  The command line parameter should be
+       in the form of &quot;-n&quot;, where n is the number of lines.  We don't   
+       check for the &quot;-&quot;, but just pass it to atoi() anyway, and then     
+       check if atoi() returned us a negative number.               
+    */</FONT>                                               
+    <FONT COLOR="#008000">num_lines</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">atoi</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">]);</FONT>
+    <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">num_lines</FONT> <FONT COLOR="#000080">&gt;=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>     
+      <FONT COLOR="#008000">fprintf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">stderr</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000000">&quot;Expected -n, where n is the number of lines\n&quot;</FONT><FONT COLOR="#000080">);</FONT>
+      <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#008000">EXIT_FAILURE</FONT><FONT COLOR="#000080">;</FONT>                                           
+    <FONT COLOR="#000080">}</FONT>
+    <FONT COLOR="#008080">/* Now make num_lines the positive number it's supposed to be. */</FONT>
+    <FONT COLOR="#008000">num_lines</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000080">-</FONT><FONT COLOR="#008000">num_lines</FONT><FONT COLOR="#000080">;</FONT>                                          
+  <FONT COLOR="#000080">}</FONT> 
+
+   <FONT COLOR="#008080">/* First, let's get enough storage for a list of n pointers... */</FONT>
+  <FONT COLOR="#008000">line_ptrs</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">malloc</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">sizeof</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">line_ptrs</FONT> <FONT COLOR="#000080">*</FONT> <FONT COLOR="#008000">num_lines</FONT><FONT COLOR="#000080">);</FONT>
+  <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(!</FONT><FONT COLOR="#008000">line_ptrs</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+    <FONT COLOR="#008000">fprintf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">stderr</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000000">&quot;Out of memory.  Sorry.\n&quot;</FONT><FONT COLOR="#000080">);</FONT>
+    <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#008000">EXIT_FAILURE</FONT><FONT COLOR="#000080">;</FONT>
+  <FONT COLOR="#000080">}</FONT>
+  <FONT COLOR="#008080">/* and make them all point to NULL */</FONT>
+  <B><FONT COLOR="#000080">for</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">i</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008000">i</FONT> <FONT COLOR="#000080">&lt;</FONT> <FONT COLOR="#008000">num_lines</FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">++)</FONT>
+    <FONT COLOR="#008000">line_ptrs</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">;</FONT>
+
+  <FONT COLOR="#008080">/* Now start reading */</FONT>
+  <FONT COLOR="#008000">current_line</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+  <B><FONT COLOR="#000080">do</FONT></B> <FONT COLOR="#000080">{</FONT>
+    <FONT COLOR="#008000">getline</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">buffer</FONT><FONT COLOR="#000080">,</FONT> <B><FONT COLOR="#000080">sizeof</FONT></B> <FONT COLOR="#008000">buffer</FONT><FONT COLOR="#000080">);</FONT>
+    <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(!</FONT><FONT COLOR="#008000">feof</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">stdin</FONT><FONT COLOR="#000080">))</FONT> <FONT COLOR="#000080">{</FONT>
+      <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">line_ptrs</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">current_line</FONT><FONT COLOR="#000080">])</FONT> <FONT COLOR="#000080">{</FONT>
+        <FONT COLOR="#008080">/* there's already something here */</FONT>
+        <FONT COLOR="#008000">free</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">line_ptrs</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">current_line</FONT><FONT COLOR="#000080">]);</FONT>
+      <FONT COLOR="#000080">}</FONT>
+      <FONT COLOR="#008000">line_ptrs</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">current_line</FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">dupstr</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">buffer</FONT><FONT COLOR="#000080">);</FONT>
+      <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(!</FONT><FONT COLOR="#008000">line_ptrs</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">current_line</FONT><FONT COLOR="#000080">])</FONT> <FONT COLOR="#000080">{</FONT>
+        <FONT COLOR="#008000">fprintf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">stderr</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000000">&quot;Out of memory.  Sorry.\n&quot;</FONT><FONT COLOR="#000080">);</FONT>
+        <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#008000">EXIT_FAILURE</FONT><FONT COLOR="#000080">;</FONT>
+      <FONT COLOR="#000080">}</FONT>
+      <FONT COLOR="#008000">current_line</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">current_line</FONT> <FONT COLOR="#000080">+</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">%</FONT> <FONT COLOR="#008000">num_lines</FONT><FONT COLOR="#000080">;</FONT>
+    <FONT COLOR="#000080">}</FONT>
+  <FONT COLOR="#000080">}</FONT> <B><FONT COLOR="#000080">while</FONT></B> <FONT COLOR="#000080">(!</FONT><FONT COLOR="#008000">feof</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">stdin</FONT><FONT COLOR="#000080">));</FONT>
+
+  <FONT COLOR="#008080">/* Finished reading the file, so we are ready to print the lines */</FONT>
+  <B><FONT COLOR="#000080">for</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">i</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008000">i</FONT> <FONT COLOR="#000080">&lt;</FONT> <FONT COLOR="#008000">num_lines</FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">++)</FONT> <FONT COLOR="#000080">{</FONT>
+    <FONT COLOR="#008000">j</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">current_line</FONT> <FONT COLOR="#000080">+</FONT> <FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">%</FONT> <FONT COLOR="#008000">num_lines</FONT><FONT COLOR="#000080">;</FONT>
+    <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">line_ptrs</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">j</FONT><FONT COLOR="#000080">])</FONT> <FONT COLOR="#000080">{</FONT>
+      <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;%s&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">line_ptrs</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">j</FONT><FONT COLOR="#000080">]);</FONT>
+      <FONT COLOR="#008000">free</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">line_ptrs</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">j</FONT><FONT COLOR="#000080">]);</FONT>
+    <FONT COLOR="#000080">}</FONT>
+  <FONT COLOR="#000080">}</FONT>
+
+  <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#008000">EXIT_SUCCESS</FONT><FONT COLOR="#000080">;</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+</pre>
+</code>
+
+<br>
+<br>
+<br>
+<br>
+
+<a href=index.html>  Back to index </a></body></html>

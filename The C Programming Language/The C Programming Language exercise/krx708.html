@@ -1,0 +1,117 @@
+<html>
+  <head>
+
+    <title>
+      The C Programming Language Exercise 7-8
+    </title>
+
+  <BODY    text="#000000"
+        bgcolor="#DDDDDD"
+           link="#800000"
+          alink="#008000"
+          vlink="#000080">
+
+
+<center>
+<h2>
+  &quot;The C Programming Language&quot;, 2nd edition, Kernighan and Ritchie
+</h2>
+<h3>
+  Answer to Exercise 7-8, page 165
+</h3>
+<h4>
+  Solution by <a href=mailto:steven.huang@iname.com>  Steven Huang </a> .
+</h4>
+</center>
+
+<br>
+<br>
+
+<i>
+Write a program to print a set of files, starting each new one on a
+new page, with a title and a running page count for each file.
+</i>
+<br>
+<br>
+
+<br>
+<br>
+<code>
+<pre>
+<FONT COLOR="#008080">/* K&amp;R Exercise 7-8 */</FONT>
+<FONT COLOR="#008080">/* Steven Huang */</FONT>
+
+<FONT COLOR="#008080">/*
+   Limitation:  This program doesn't wrap long lines.
+*/</FONT>
+ 
+<FONT COLOR="#0000FF"><B>#include &lt;stdio.h&gt;</B></FONT>
+<FONT COLOR="#0000FF"><B>#include &lt;stdlib.h&gt;</B></FONT>
+<FONT COLOR="#0000FF"><B>#include &lt;assert.h&gt;</B></FONT>
+
+<FONT COLOR="#0000FF"><B>#define LINES_PER_PAGE 10</B></FONT>
+<FONT COLOR="#0000FF"><B>#define TRUE           1</B></FONT>
+<FONT COLOR="#0000FF"><B>#define FALSE          0</B></FONT>
+
+<B><FONT COLOR="#000080">void</FONT></B> <FONT COLOR="#008000">print_file</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">file_name</FONT><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+  <FONT COLOR="#008000">FILE</FONT> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">f</FONT><FONT COLOR="#000080">;</FONT>
+  <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">page_number</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">;</FONT>
+  <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">line_count</FONT><FONT COLOR="#000080">;</FONT>    
+  <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">;</FONT>        
+  <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">new_page</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">TRUE</FONT><FONT COLOR="#000080">;</FONT>
+ 
+  <FONT COLOR="#008000">assert</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">file_name</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">);</FONT>
+
+  <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">((</FONT><FONT COLOR="#008000">f</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">fopen</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">file_name</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000000">&quot;r&quot;</FONT><FONT COLOR="#000080">))</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+    <B><FONT COLOR="#000080">while</FONT></B> <FONT COLOR="#000080">((</FONT><FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">fgetc</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">f</FONT><FONT COLOR="#000080">))</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#008000">EOF</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+      <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">new_page</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>  
+        <FONT COLOR="#008080">/* print out the header */</FONT>
+        <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;[%s] page %d starts\n&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">file_name</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">page_number</FONT><FONT COLOR="#000080">);</FONT>
+        <FONT COLOR="#008000">new_page</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">FALSE</FONT><FONT COLOR="#000080">;</FONT>
+        <FONT COLOR="#008000">line_count</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">;</FONT>
+      <FONT COLOR="#000080">}</FONT>                
+      <FONT COLOR="#008000">putchar</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">);</FONT>
+      <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'\n'</B></FONT> <FONT COLOR="#000080">&amp;&amp;</FONT> <FONT COLOR="#000080">++</FONT><FONT COLOR="#008000">line_count</FONT> <FONT COLOR="#000080">&gt;</FONT> <FONT COLOR="#008000">LINES_PER_PAGE</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+        <FONT COLOR="#008080">/* print out the footer */</FONT>
+        <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;[%s] page %d ends\n&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">file_name</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">page_number</FONT><FONT COLOR="#000080">);</FONT>
+        <FONT COLOR="#008080">/* skip another line so we can see it on screen */</FONT>
+        <FONT COLOR="#008000">putchar</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000"><B>'\n'</B></FONT><FONT COLOR="#000080">);</FONT>
+        <FONT COLOR="#008000">new_page</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">TRUE</FONT><FONT COLOR="#000080">;</FONT>
+        <FONT COLOR="#008000">page_number</FONT><FONT COLOR="#000080">++;</FONT>
+      <FONT COLOR="#000080">}</FONT>              
+    <FONT COLOR="#000080">}</FONT> 
+    <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(!</FONT><FONT COLOR="#008000">new_page</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+      <FONT COLOR="#008080">/* file ended in the middle of a page, so we still need to
+         print a footer */</FONT>
+      <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;[%s] page %d ends\n&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">file_name</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">page_number</FONT><FONT COLOR="#000080">);</FONT>
+    <FONT COLOR="#000080">}</FONT>
+    <FONT COLOR="#008080">/* skip another line so we can see it on screen */</FONT>
+    <FONT COLOR="#008000">putchar</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000"><B>'\n'</B></FONT><FONT COLOR="#000080">);</FONT>    
+    <FONT COLOR="#008000">fclose</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">f</FONT><FONT COLOR="#000080">);</FONT>
+  <FONT COLOR="#000080">}</FONT> 
+<FONT COLOR="#000080">}</FONT>
+
+<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">main</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">argc</FONT><FONT COLOR="#000080">,</FONT> <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">[])</FONT>
+<FONT COLOR="#000080">{</FONT>
+  <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">;</FONT>
+
+  <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">argc</FONT> <FONT COLOR="#000080">&lt;</FONT> <FONT COLOR="#000000"><B>2</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+    <FONT COLOR="#008000">fputs</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;no files specified\n&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">stderr</FONT><FONT COLOR="#000080">);</FONT>
+    <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#008000">EXIT_FAILURE</FONT><FONT COLOR="#000080">;</FONT>
+  <FONT COLOR="#000080">}</FONT>
+  <B><FONT COLOR="#000080">for</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">i</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008000">i</FONT> <FONT COLOR="#000080">&lt;</FONT> <FONT COLOR="#008000">argc</FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">++)</FONT> <FONT COLOR="#000080">{</FONT>
+    <FONT COLOR="#008000">print_file</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">]);</FONT>
+  <FONT COLOR="#000080">}</FONT>
+  <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#008000">EXIT_SUCCESS</FONT><FONT COLOR="#000080">;</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+</pre>
+</code>
+
+<br>
+<br>
+<br>
+<br>
+
+<a href=index.html>  Back to index </a></body></html>

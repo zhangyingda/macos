@@ -1,0 +1,86 @@
+<html>
+  <head>
+
+    <title>
+      The C Programming Language Exercise 2-9
+    </title>
+
+  <BODY    text="#000000"
+        bgcolor="#DDDDDD"
+           link="#800000"
+          alink="#008000"
+          vlink="#000080">
+
+
+<center>
+<h2>
+  &quot;The C Programming Language&quot;, 2nd edition, Kernighan and Ritchie
+</h2>
+<h3>
+  Answer to Exercise 2-9, page 51
+</h3>
+<h4>
+  Solution by <a href=mailto:gkp1@flash.net>  Gregory Pietsch </a>
+</h4>
+</center>
+
+<i>
+In a two's complement number system, <code>x</code> <code>&amp;=</code> <code>(x-1)</code> deletes
+the rightmost 1-bit in <code>x</code> .  Explain why.  Use this observation to write a
+faster version of <code>bitcount</code> .
+</i>
+<br>
+<br>
+bitcount is written on p.50 as this:
+
+<code>
+<pre>
+<FONT COLOR="#008080">/* bitcount:  count 1 bits in x */</FONT>
+<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">bitcount</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">unsigned</FONT></B> <FONT COLOR="#008000">x</FONT><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+    <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">b</FONT><FONT COLOR="#000080">;</FONT>
+
+    <B><FONT COLOR="#000080">for</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">b</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008000">x</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008000">x</FONT> <FONT COLOR="#000080">&gt;&gt;=</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">)</FONT>
+        <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">x</FONT> <FONT COLOR="#000080">&amp;</FONT> <FONT COLOR="#000000"><B>01</B></FONT><FONT COLOR="#000080">)</FONT>
+            <FONT COLOR="#008000">b</FONT><FONT COLOR="#000080">++;</FONT>
+    <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#008000">b</FONT><FONT COLOR="#000080">;</FONT>
+<FONT COLOR="#000080">}</FONT>
+</pre>
+</code>
+
+
+<br>
+<br>
+Answer:
+
+If x is odd, then (x-1) has the same bit representation as x except that
+the rightmost 1-bit is now a 0.  In this case, (x &amp; (x-1)) == (x-1).
+
+If x is even, then the representation of (x-1) has the rightmost zeros
+of x becoming ones and the rightmost one becoming a zero.  Anding the
+two clears the rightmost 1-bit in x and all the rightmost 1-bits from
+(x-1).
+
+Here's the new version of bitcount:
+
+<br>
+<br>
+<code>
+<pre>
+<FONT COLOR="#008080">/* bitcount:  count 1 bits in x */</FONT>
+<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">bitcount</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">unsigned</FONT></B> <FONT COLOR="#008000">x</FONT><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+    <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">b</FONT><FONT COLOR="#000080">;</FONT>
+
+    <B><FONT COLOR="#000080">for</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">b</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008000">x</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008000">x</FONT> <FONT COLOR="#000080">&amp;=</FONT> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">x</FONT><FONT COLOR="#000080">-</FONT><FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">))</FONT>
+        <FONT COLOR="#008000">b</FONT><FONT COLOR="#000080">++;</FONT>
+    <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#008000">b</FONT><FONT COLOR="#000080">;</FONT>
+<FONT COLOR="#000080">}</FONT>
+</pre>
+</code>
+
+
+<br>
+<br>
+
+<a href=index.html>  Back to index </a></body></html>

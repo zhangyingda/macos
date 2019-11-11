@@ -1,0 +1,135 @@
+<html>
+  <head>
+
+    <title>
+      The C Programming Language Exercise 8-4
+    </title>
+
+  <BODY    text="#000000"
+        bgcolor="#DDDDDD"
+           link="#800000"
+          alink="#008000"
+          vlink="#000080">
+
+
+<center>
+<h2>
+  &quot;The C Programming Language&quot;, 2nd edition, Kernighan and Ritchie
+</h2>
+<h3>
+  Answer to Exercise 8-4, page 179
+</h3>
+<h4>
+  Solution by <a href=mailto:gkp1@flash.net>  Gregory Pietsch </a>
+</h4>
+</center>
+
+<i>
+The standard library function
+<br>
+  <code>int</code> <code>fseek(FILE</code> <code>*fp,</code> <code>long</code> <code>offset,</code> <code>int</code> <code>origin)</code>
+<br>
+is identical to <code>lseek</code> except that <code>fp</code> is a file pointer instead of a file
+descriptor and the return value is an <code>int</code> status, not a position. Write <code>fseek</code> .
+Make sure that your <code>fseek</code> coordinates properly with the buffering done for the other
+functions of the library.
+</i>
+<br>
+<br>
+Here's Gregory's first solution:
+<br>
+<br>
+<code>
+<pre>
+<FONT COLOR="#008080">/* Gregory Pietsch -- My category 0 solution to 8-4 */</FONT>
+
+<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">fseek</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">FILE</FONT> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">f</FONT><FONT COLOR="#000080">,</FONT> <B><FONT COLOR="#000080">long</FONT></B> <FONT COLOR="#008000">offset</FONT><FONT COLOR="#000080">,</FONT> <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">whence</FONT><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+    <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">((</FONT><FONT COLOR="#008000">f</FONT><FONT COLOR="#000080">-&gt;</FONT><FONT COLOR="#008000">flag</FONT> <FONT COLOR="#000080">&amp;</FONT> <FONT COLOR="#008000">_UNBUF</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>0</B></FONT> <FONT COLOR="#000080">&amp;&amp;</FONT> <FONT COLOR="#008000">base</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+        <FONT COLOR="#008080">/* deal with buffering */</FONT>
+        <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">f</FONT><FONT COLOR="#000080">-&gt;</FONT><FONT COLOR="#008000">flag</FONT> <FONT COLOR="#000080">&amp;</FONT> <FONT COLOR="#008000">_WRITE</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+            <FONT COLOR="#008080">/* writing, so flush buffer */</FONT>
+            <FONT COLOR="#008000">fflush</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">f</FONT><FONT COLOR="#000080">);</FONT>  <FONT COLOR="#008080">/* from 8-3 */</FONT>
+        <FONT COLOR="#000080">}</FONT> <B><FONT COLOR="#000080">else</FONT></B> <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">f</FONT><FONT COLOR="#000080">-&gt;</FONT><FONT COLOR="#008000">flag</FONT> <FONT COLOR="#000080">&amp;</FONT> <FONT COLOR="#008000">_READ</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+            <FONT COLOR="#008080">/* reading, so trash buffer */</FONT>
+            <FONT COLOR="#008000">f</FONT><FONT COLOR="#000080">-&gt;</FONT><FONT COLOR="#008000">cnt</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+            <FONT COLOR="#008000">f</FONT><FONT COLOR="#000080">-&gt;</FONT><FONT COLOR="#008000">ptr</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">f</FONT><FONT COLOR="#000080">-&gt;</FONT><FONT COLOR="#008000">base</FONT><FONT COLOR="#000080">;</FONT>
+        <FONT COLOR="#000080">}</FONT>
+    <FONT COLOR="#000080">}</FONT>
+    <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">lseek</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">f</FONT><FONT COLOR="#000080">-&gt;</FONT><FONT COLOR="#008000">fd</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">offset</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">whence</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">&lt;</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">);</FONT>
+<FONT COLOR="#000080">}</FONT>
+</pre>
+</code>
+
+<br>
+<br>
+...and here's his second, which is considerably more comprehensive:
+<br>
+<br>
+<code>
+<pre>
+<FONT COLOR="#008080">/*
+
+[The following solution is in the zip file as krx80401.c - RJH (ed.) ]
+
+EXERCISE 8-4
+
+I thought I'd improve 8-4 too.  I'm trying my best to get this as close
+to ISO C as possible given the restrictions that I'm under.  (A real
+implementation would have fsetpos() borrow some of the same code.)
+
+*/</FONT>
+
+<FONT COLOR="#008080">/* Gregory Pietsch -- My category 0 solution to 8-4 */</FONT>
+
+<FONT COLOR="#0000FF"><B>#define SEEK_SET 0</B></FONT>
+<FONT COLOR="#0000FF"><B>#define SEEK_CUR 1</B></FONT>
+<FONT COLOR="#0000FF"><B>#define SEEK_END 2</B></FONT>
+
+<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">fseek</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">FILE</FONT> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">f</FONT><FONT COLOR="#000080">,</FONT> <B><FONT COLOR="#000080">long</FONT></B> <FONT COLOR="#008000">offset</FONT><FONT COLOR="#000080">,</FONT> <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">whence</FONT><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+    <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">result</FONT><FONT COLOR="#000080">;</FONT>
+
+    <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">((</FONT><FONT COLOR="#008000">f</FONT><FONT COLOR="#000080">-&gt;</FONT><FONT COLOR="#008000">flag</FONT> <FONT COLOR="#000080">&amp;</FONT> <FONT COLOR="#008000">_UNBUF</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>0</B></FONT> <FONT COLOR="#000080">&amp;&amp;</FONT> <FONT COLOR="#008000">base</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+        <FONT COLOR="#008080">/* deal with buffering */</FONT>
+        <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">f</FONT><FONT COLOR="#000080">-&gt;</FONT><FONT COLOR="#008000">flag</FONT> <FONT COLOR="#000080">&amp;</FONT> <FONT COLOR="#008000">_WRITE</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+            <FONT COLOR="#008080">/* writing, so flush buffer */</FONT>
+            <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">fflush</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">f</FONT><FONT COLOR="#000080">))</FONT>
+                <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#008000">EOF</FONT><FONT COLOR="#000080">;</FONT>  <FONT COLOR="#008080">/* from 8-3 */</FONT>
+        <FONT COLOR="#000080">}</FONT> <B><FONT COLOR="#000080">else</FONT></B> <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">f</FONT><FONT COLOR="#000080">-&gt;</FONT><FONT COLOR="#008000">flag</FONT> <FONT COLOR="#000080">&amp;</FONT> <FONT COLOR="#008000">_READ</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+            <FONT COLOR="#008080">/* reading, so trash buffer --
+             * but I have to do some housekeeping first
+             */</FONT>
+            <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">whence</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#008000">SEEK_CUR</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+                <FONT COLOR="#008080">/* fix offset so that it's from the last 
+                 * character the user read (not the last
+                 * character that was actually read)
+                 */</FONT>
+                <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">offset</FONT> <FONT COLOR="#000080">&gt;=</FONT> <FONT COLOR="#000000"><B>0</B></FONT> <FONT COLOR="#000080">&amp;&amp;</FONT> <FONT COLOR="#008000">offset</FONT> <FONT COLOR="#000080">&lt;=</FONT> <FONT COLOR="#008000">f</FONT><FONT COLOR="#000080">-&gt;</FONT><FONT COLOR="#008000">cnt</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+                    <FONT COLOR="#008080">/* easy shortcut */</FONT>
+                    <FONT COLOR="#008000">f</FONT><FONT COLOR="#000080">-&gt;</FONT><FONT COLOR="#008000">cnt</FONT> <FONT COLOR="#000080">-=</FONT> <FONT COLOR="#008000">offset</FONT><FONT COLOR="#000080">;</FONT>
+                    <FONT COLOR="#008000">f</FONT><FONT COLOR="#000080">-&gt;</FONT><FONT COLOR="#008000">ptr</FONT> <FONT COLOR="#000080">+=</FONT> <FONT COLOR="#008000">offset</FONT><FONT COLOR="#000080">;</FONT>
+                    <FONT COLOR="#008000">f</FONT><FONT COLOR="#000080">-&gt;</FONT><FONT COLOR="#008000">flags</FONT> <FONT COLOR="#000080">&amp;=</FONT> <FONT COLOR="#000080">~</FONT><FONT COLOR="#008000">_EOF</FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008080">/* see below */</FONT>
+                    <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+                <FONT COLOR="#000080">}</FONT> <B><FONT COLOR="#000080">else</FONT></B>
+                    <FONT COLOR="#008000">offset</FONT> <FONT COLOR="#000080">-=</FONT> <FONT COLOR="#008000">f</FONT><FONT COLOR="#000080">-&gt;</FONT><FONT COLOR="#008000">cnt</FONT><FONT COLOR="#000080">;</FONT>
+            <FONT COLOR="#000080">}</FONT>
+            <FONT COLOR="#008000">f</FONT><FONT COLOR="#000080">-&gt;</FONT><FONT COLOR="#008000">cnt</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+            <FONT COLOR="#008000">f</FONT><FONT COLOR="#000080">-&gt;</FONT><FONT COLOR="#008000">ptr</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">f</FONT><FONT COLOR="#000080">-&gt;</FONT><FONT COLOR="#008000">base</FONT><FONT COLOR="#000080">;</FONT>
+        <FONT COLOR="#000080">}</FONT>
+    <FONT COLOR="#000080">}</FONT>
+    <FONT COLOR="#008000">result</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">lseek</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">f</FONT><FONT COLOR="#000080">-&gt;</FONT><FONT COLOR="#008000">fd</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">offset</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">whence</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">&lt;</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">);</FONT>
+    <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">result</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">)</FONT>
+        <FONT COLOR="#008000">f</FONT><FONT COLOR="#000080">-&gt;</FONT><FONT COLOR="#008000">flags</FONT> <FONT COLOR="#000080">&amp;=</FONT> <FONT COLOR="#000080">~</FONT><FONT COLOR="#008000">_EOF</FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008080">/* if successful, clear EOF flag */</FONT>
+    <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#008000">result</FONT><FONT COLOR="#000080">;</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+</pre>
+</code>
+
+<br>
+<br>
+<br>
+<br>
+
+<a href=index.html>  Back to index </a></body></html>

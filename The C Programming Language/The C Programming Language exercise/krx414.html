@@ -1,0 +1,179 @@
+<html>
+  <head>
+
+    <title>
+      The C Programming Language Exercise 4-14
+    </title>
+
+  <BODY    text="#000000"
+        bgcolor="#DDDDDD"
+           link="#800000"
+          alink="#008000"
+          vlink="#000080">
+
+
+<center>
+<h2>
+  &quot;The C Programming Language&quot;, 2nd edition, Kernighan and Ritchie
+</h2>
+<h3>
+  Answer to Exercise 4-14, page 91 
+</h3>
+<h4>
+  Solutions by <a href=mailto:gkp1@flash.net>  Gregory Pietsch </a>
+  and <a href=mailto:liw@iki.fi>  Lars Wirzenius </a>
+</h4>
+</center>
+
+<i>
+Define a macro <code>swap(t,x,y)</code> that interchanges two arguments of type <code>t</code> .
+(Block structure will help.)
+</i>
+<br>
+<br>
+Here are Greg's solutions for Cat 0 and Cat 1:
+<br>
+<br>
+<code>
+<pre>
+<FONT COLOR="#008080">/* EXERCISE 4-14 Gregory Pietsch */</FONT>
+
+<FONT COLOR="#008080">/* conditional compilation added by RJH */</FONT>
+
+<FONT COLOR="#0000FF"><B>#ifdef CATEGORY_0</B></FONT>
+
+<FONT COLOR="#0000FF"><B>#define swap(t,x,y) do{t z=x;x=y;y=z}while(0)</B></FONT>
+
+<FONT COLOR="#0000FF"><B>#else</B></FONT>
+<FONT COLOR="#0000FF"><B>#ifdef CATEGORY_1</B></FONT>
+
+<FONT COLOR="#008080">/*
+This works if I can use the assignment operator on type t.
+I didn't know if I was allowed to use sizeof or not and still remain
+Level 0, otherwise this one is better:
+*/</FONT>
+
+<FONT COLOR="#0000FF"><B>#define swap(t,x,y)                             \
+do {                                            \
+    (unsigned char *)a=(unsigned char *)(&amp;(x)); \
+    (unsigned char *)b=(unsigned char *)(&amp;(y)); \
+    size_t i = sizeof(t);                       \
+    while (i--) {                               \
+        *a ^= *b;                               \
+        *b ^= *a;                               \
+        *a ^= *b;                               \
+        a++;                                    \
+        b++;                                    \
+    }                                           \
+} while (0)</B></FONT>
+
+<FONT COLOR="#0000FF"><B>#endif</B></FONT>
+<FONT COLOR="#0000FF"><B>#endif</B></FONT>
+
+<FONT COLOR="#008080">/* editor's note: sizeof is first mentioned on p91, after this exercise,
+ * and is not explained properly until p135, so it can be used in
+ * Category 0 solutions only for exercises 6-1 onward.
+ */</FONT>
+
+
+</pre>
+</code>
+
+<br>
+<br>
+<br>
+<br>
+...and here is a lively entry for Category 0, from Lars, which uses token pasting
+to derive a name for the temporary variable:
+<br>
+<br>
+<code>
+<pre>
+<FONT COLOR="#008080">/*
+ * Solution to exercise 4-14 in K&amp;R2, page 91:
+ *
+ *	Define a macro swap(t,x,y) that interchanges two arguments of type t.
+ *	(Block structure will help.)
+ *
+ * Feel free to modify and copy, if you really must, but preferably not.
+ * This is just an exercise in preprocessor mechanics, not an example of
+ * how it should really be used. The trickery is not worth it to save three
+ * lines of code.
+ *
+ * To exchange the values of two variables we need a temporary variable and
+ * this one needs a name. Any name we pick, the user of the macro might also
+ * use. Thus, we use the preprocessor argument concatenation operator ## to
+ * create the name from the actual variable names in the call. This guarantees
+ * that the result won't be either of the actual arguments. In order to
+ * make sure the result also does not fall into the implementation's name
+ * space, we prefix the name with something safe.
+ *
+ * Lars Wirzenius &lt;liw@iki.fi&gt;
+ */</FONT>
+
+<FONT COLOR="#0000FF"><B>#include &lt;stdio.h&gt;</B></FONT>
+
+<FONT COLOR="#0000FF"><B>#define swap(t, x, y) \
+	do { \
+		t safe ## x ## y; \
+		safe ## x ## y = x; \
+		x = y; \
+		y = safe ## x ## y; \
+	} while (0)</B></FONT>
+
+<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">main</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">void</FONT></B><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+	<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">ix</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">iy</FONT><FONT COLOR="#000080">;</FONT>
+	<B><FONT COLOR="#000080">double</FONT></B> <FONT COLOR="#008000">dx</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">dy</FONT><FONT COLOR="#000080">;</FONT>
+	<B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">px</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">py</FONT><FONT COLOR="#000080">;</FONT>
+	
+	<FONT COLOR="#008000">ix</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>42</B></FONT><FONT COLOR="#000080">;</FONT>
+	<FONT COLOR="#008000">iy</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>69</B></FONT><FONT COLOR="#000080">;</FONT>
+	<FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;integers before swap: %d and %d\n&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">ix</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">iy</FONT><FONT COLOR="#000080">);</FONT>
+	<FONT COLOR="#008000">swap</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">int</FONT></B><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">ix</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">iy</FONT><FONT COLOR="#000080">);</FONT>
+	<FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;integers after swap: %d and %d\n&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">ix</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">iy</FONT><FONT COLOR="#000080">);</FONT>
+	
+	<FONT COLOR="#008000">dx</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>123</B></FONT><FONT COLOR="#000000"><B>.0</B></FONT><FONT COLOR="#000080">;</FONT>
+	<FONT COLOR="#008000">dy</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>321</B></FONT><FONT COLOR="#000000"><B>.0</B></FONT><FONT COLOR="#000080">;</FONT>
+	<FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;doubles before swap: %g and %g\n&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">dx</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">dy</FONT><FONT COLOR="#000080">);</FONT>
+	<FONT COLOR="#008000">swap</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">double</FONT></B><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">dx</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">dy</FONT><FONT COLOR="#000080">);</FONT>
+	<FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;integers after swap: %g and %g\n&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">dx</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">dy</FONT><FONT COLOR="#000080">);</FONT>
+	
+	<FONT COLOR="#008000">px</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000">&quot;hello&quot;</FONT><FONT COLOR="#000080">;</FONT>
+	<FONT COLOR="#008000">py</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000">&quot;world&quot;</FONT><FONT COLOR="#000080">;</FONT>
+	<FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;pointers before swap: %s and %s\n&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">px</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">py</FONT><FONT COLOR="#000080">);</FONT>
+	<FONT COLOR="#008000">swap</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*,</FONT> <FONT COLOR="#008000">px</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">py</FONT><FONT COLOR="#000080">);</FONT>
+	<FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;integers after swap: %s and %s\n&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">px</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">py</FONT><FONT COLOR="#000080">);</FONT>
+
+	<B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+<FONT COLOR="#000080">}</FONT>
+</pre>
+</code>
+
+<br>
+<br>
+...and here is yet another solution from Gregory:
+<br>
+<br>
+<code>
+<pre>
+<FONT COLOR="#0000FF"><B>#define swap(t,x,y)                                     \
+do {                                                    \
+    (unsigned char *)_0=(unsigned char *)(&amp;(x));        \
+    (unsigned char *)_1=(unsigned char *)(&amp;(y));        \
+    unsigned long _2 = (unsigned long)                  \
+       ((unsigned char *)(&amp;(x)+1)                       \
+        - (unsigned char *)(&amp;(x)));                     \
+    while (_2--) {                                      \
+        *_0 ^= *_1;                                     \
+        *_1 ^= *_0;                                     \
+        *_0 ^= *_1;                                     \
+        _0++;                                           \
+        _1++;                                           \
+    }                                                   \
+} while (0)</B></FONT>
+</pre>
+</code>
+
+<br>
+<br>
+<a href=index.html>  Back to index </a></body></html>

@@ -1,0 +1,149 @@
+<html>
+  <head>
+
+    <title>
+      The C Programming Language Exercise 1-9
+    </title>
+
+  <BODY    text="#000000"
+        bgcolor="#DDDDDD"
+           link="#800000"
+          alink="#008000"
+          vlink="#000080">
+
+
+<center>
+<h2>
+  &quot;The C Programming Language&quot;, 2nd edition, Kernighan and Ritchie
+</h2>
+<h3>
+  Answer to Exercise 1-9, page 20
+</h3>
+<h4>
+  Solutions by <a href=mailto:complangc@eton.powernet.co.uk>  Richard Heathfield </a> ,
+  <a href=mailto:sidi@angband.org>  Chris Sidi </a> , and
+  <a href=mailto:stig@brautaset.org>  Stig Brautaset </a>
+</h4>
+</center>
+
+<i>
+Write a program to copy its input to its output,
+replacing each string of one or more blanks by a single blank.
+</i>
+<br>
+<br>
+
+<br>
+<code>
+<pre>
+<FONT COLOR="#0000FF"><B>#include &lt;stdio.h&gt;</B></FONT>
+
+<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">main</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">void</FONT></B><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+  <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">;</FONT>
+  <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">inspace</FONT><FONT COLOR="#000080">;</FONT>
+
+  <FONT COLOR="#008000">inspace</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+  <B><FONT COLOR="#000080">while</FONT></B><FONT COLOR="#000080">((</FONT><FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">getchar</FONT><FONT COLOR="#000080">())</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#008000">EOF</FONT><FONT COLOR="#000080">)</FONT>
+  <FONT COLOR="#000080">{</FONT>
+    <B><FONT COLOR="#000080">if</FONT></B><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>' '</B></FONT><FONT COLOR="#000080">)</FONT>
+    <FONT COLOR="#000080">{</FONT>
+      <B><FONT COLOR="#000080">if</FONT></B><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">inspace</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">)</FONT>
+      <FONT COLOR="#000080">{</FONT>
+        <FONT COLOR="#008000">inspace</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">;</FONT>
+        <FONT COLOR="#008000">putchar</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">);</FONT>
+      <FONT COLOR="#000080">}</FONT>
+    <FONT COLOR="#000080">}</FONT>
+
+    <FONT COLOR="#008080">/* We haven't met 'else' yet, so we have to be a little clumsy */</FONT>
+    <B><FONT COLOR="#000080">if</FONT></B><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#000000"><B>' '</B></FONT><FONT COLOR="#000080">)</FONT>
+    <FONT COLOR="#000080">{</FONT>
+      <FONT COLOR="#008000">inspace</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+      <FONT COLOR="#008000">putchar</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">);</FONT>
+    <FONT COLOR="#000080">}</FONT>
+  <FONT COLOR="#000080">}</FONT>
+
+  <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+</pre>
+</code>
+
+
+<br>
+<br>
+Chris Sidi writes: &quot;instead of having an &quot;inspace&quot; boolean, you can keep track of
+the previous character and see if both the current character and previous character are spaces:&quot;
+<br>
+<br>
+<br>
+<code>
+<pre>
+<FONT COLOR="#0000FF"><B>#include &lt;stdio.h&gt;</B></FONT>
+
+<FONT COLOR="#008080">/* count lines in input */</FONT>
+<B><FONT COLOR="#000080">int</FONT></B>
+<FONT COLOR="#008000">main</FONT><FONT COLOR="#000080">()</FONT>
+<FONT COLOR="#000080">{</FONT>
+        <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">pc</FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008080">/* c = character, pc = previous character */</FONT>
+
+        <FONT COLOR="#008080">/* set pc to a value that wouldn't match any character, in case
+        this program is ever modified to get rid of multiples of other
+        characters */</FONT>
+
+        <FONT COLOR="#008000">pc</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">EOF</FONT><FONT COLOR="#000080">;</FONT>
+
+        <B><FONT COLOR="#000080">while</FONT></B> <FONT COLOR="#000080">((</FONT><FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">getchar</FONT><FONT COLOR="#000080">())</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#008000">EOF</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+                <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>' '</B></FONT><FONT COLOR="#000080">)</FONT>
+                        <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">pc</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#000000"><B>' '</B></FONT><FONT COLOR="#000080">)</FONT>   <FONT COLOR="#008080">/* or if (pc != c) */</FONT> 
+                                <FONT COLOR="#008000">putchar</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">);</FONT>
+
+                <FONT COLOR="#008080">/* We haven't met 'else' yet, so we have to be a little clumsy */</FONT>
+                <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#000000"><B>' '</B></FONT><FONT COLOR="#000080">)</FONT>
+                        <FONT COLOR="#008000">putchar</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">);</FONT>
+                <FONT COLOR="#008000">pc</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">;</FONT>
+        <FONT COLOR="#000080">}</FONT>
+
+        <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+
+</pre>
+</code>
+
+<br>
+<br>
+<br>
+Stig writes: &quot;I am hiding behind the fact that <code>break</code> is mentioned
+in the introduction&quot;!
+<br>
+<br>
+<code>
+<pre>
+<FONT COLOR="#0000FF"><B>#include &lt;stdio.h&gt;</B></FONT>
+
+<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">main</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">void</FONT></B><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+	<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">;</FONT>
+	<B><FONT COLOR="#000080">while</FONT></B> <FONT COLOR="#000080">((</FONT><FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">getchar</FONT><FONT COLOR="#000080">())</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#008000">EOF</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+		 <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>' '</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+			<FONT COLOR="#008000">putchar</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">);</FONT>
+		 	<B><FONT COLOR="#000080">while</FONT></B><FONT COLOR="#000080">((</FONT><FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">getchar</FONT><FONT COLOR="#000080">())</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>' '</B></FONT> <FONT COLOR="#000080">&amp;&amp;</FONT> <FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#008000">EOF</FONT><FONT COLOR="#000080">)</FONT>
+				<FONT COLOR="#000080">;</FONT>
+		<FONT COLOR="#000080">}</FONT>
+		<B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#008000">EOF</FONT><FONT COLOR="#000080">)</FONT>
+			<B><FONT COLOR="#000080">break</FONT></B><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008080">/* the break keyword is mentioned
+				* in the introduction... 
+				* */</FONT>
+
+		<FONT COLOR="#008000">putchar</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">);</FONT>
+	<FONT COLOR="#000080">}</FONT>
+	<B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+<FONT COLOR="#000080">}</FONT>
+</pre>
+</code>
+
+<br>
+<br>
+
+<a href=index.html>  Back to index </a></body></html>

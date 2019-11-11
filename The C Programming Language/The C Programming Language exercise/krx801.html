@@ -1,0 +1,92 @@
+<html>
+  <head>
+
+    <title>
+      The C Programming Language Exercise 8-1
+    </title>
+
+  <BODY    text="#000000"
+        bgcolor="#DDDDDD"
+           link="#800000"
+          alink="#008000"
+          vlink="#000080">
+
+
+<center>
+<h2>
+  &quot;The C Programming Language&quot;, 2nd edition, Kernighan and Ritchie
+</h2>
+<h3>
+  Answer to Exercise 8-1, page 174
+</h3>
+<h4>
+  Solution by <a href=mailto:atesker@cs.mbu.edu>  Andrew Tesker </a>
+</h4>
+</center>
+
+<BR>
+Ron Scott has also sent me a solution to this exercise. Once he has granted me
+permission to display it here, I will post it on this site.
+<BR>
+
+<i>
+Rewrite the program <code>cat</code> from Chapter 7 using <code>read</code> , <code>write</code> , <code>open</code>
+and <code>close</code> instead of their standard library equivalents. Perform experiments
+to determine the relative speeds of the two versions.
+</i>
+<br>
+<br>
+
+<code>
+<pre>
+<FONT COLOR="#008080">/*
+  Andrew Tesker
+  ucat.c
+  a version of cat using UNIX system access
+*/</FONT>
+
+<FONT COLOR="#0000FF"><B>#include &lt;stdio.h&gt;</B></FONT>
+<FONT COLOR="#0000FF"><B>#include &lt;fcntl.h&gt;</B></FONT>
+<FONT COLOR="#0000FF"><B>#define BUFSIZE 1024</B></FONT>
+
+
+<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">main</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">argc</FONT><FONT COLOR="#000080">,</FONT> <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">[])</FONT>
+<FONT COLOR="#000080">{</FONT>
+  <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">fd1</FONT><FONT COLOR="#000080">;</FONT>
+  <B><FONT COLOR="#000080">void</FONT></B> <FONT COLOR="#008000">filecopy</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">f</FONT><FONT COLOR="#000080">,</FONT> <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">t</FONT><FONT COLOR="#000080">);</FONT>
+  
+  <B><FONT COLOR="#000080">if</FONT></B><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">argc</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">)</FONT>
+    <FONT COLOR="#008000">filecopy</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">);</FONT>
+
+  <B><FONT COLOR="#000080">else</FONT></B> <FONT COLOR="#000080">{</FONT>
+    <B><FONT COLOR="#000080">while</FONT></B><FONT COLOR="#000080">(--</FONT><FONT COLOR="#008000">argc</FONT> <FONT COLOR="#000080">&gt;</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">)</FONT>
+      <B><FONT COLOR="#000080">if</FONT></B><FONT COLOR="#000080">((</FONT> <FONT COLOR="#008000">fd1</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">open</FONT><FONT COLOR="#000080">(*++</FONT><FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">O_RDONLY</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">))</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000080">-</FONT><FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+	<FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;unix cat: can't open %s\n&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">);</FONT>
+	<B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">;</FONT>
+      <FONT COLOR="#000080">}</FONT>
+      <B><FONT COLOR="#000080">else</FONT></B> <FONT COLOR="#000080">{</FONT>
+	<FONT COLOR="#008000">filecopy</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">fd1</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">);</FONT>
+	<FONT COLOR="#008000">close</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">fd1</FONT><FONT COLOR="#000080">);</FONT>
+      <FONT COLOR="#000080">}</FONT>
+  <FONT COLOR="#000080">}</FONT>
+  
+  <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+  
+<FONT COLOR="#000080">}</FONT>
+
+<B><FONT COLOR="#000080">void</FONT></B> <FONT COLOR="#008000">filecopy</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">from</FONT><FONT COLOR="#000080">,</FONT> <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">to</FONT><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+  <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">n</FONT><FONT COLOR="#000080">;</FONT>
+  <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#008000">buf</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">BUFSIZE</FONT><FONT COLOR="#000080">];</FONT>
+
+  <B><FONT COLOR="#000080">while</FONT></B><FONT COLOR="#000080">((</FONT><FONT COLOR="#008000">n</FONT><FONT COLOR="#000080">=</FONT><FONT COLOR="#008000">read</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">from</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">buf</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">BUFSIZE</FONT><FONT COLOR="#000080">))</FONT> <FONT COLOR="#000080">&gt;</FONT> <FONT COLOR="#000000"><B>0</B></FONT> <FONT COLOR="#000080">)</FONT>
+    <FONT COLOR="#008000">write</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">to</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">buf</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">n</FONT><FONT COLOR="#000080">);</FONT>
+<FONT COLOR="#000080">}</FONT>
+</pre>
+</code>
+
+
+<br>
+<br>
+
+<a href=index.html>  Back to index </a></body></html>

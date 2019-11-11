@@ -1,0 +1,265 @@
+<html>
+  <head>
+
+    <title>
+      The C Programming Language Exercise 4-4
+    </title>
+
+  <BODY    text="#000000"
+        bgcolor="#DDDDDD"
+           link="#800000"
+          alink="#008000"
+          vlink="#000080">
+
+
+<center>
+<h2>
+  &quot;The C Programming Language&quot;, 2nd edition, Kernighan and Ritchie
+</h2>
+<h3>
+  Answer to Exercise 4-4, page 79
+</h3>
+<h4>
+Solution by <a href=mailto:bob@pattinson.demon.co.uk>  Bob Wightman </a>
+</h4>
+</center>
+
+<i>
+Add commands to print the top element of the stack without popping, to duplicate
+it, and to swap the top two elements. Add a command to clear the stack.
+</i>
+<br>
+<br>
+<br>
+<br>
+<code>
+<pre>
+<FONT COLOR="#0000FF"><B>#include&lt;stdlib.h&gt;</B></FONT>
+<FONT COLOR="#0000FF"><B>#include&lt;stdio.h&gt;</B></FONT>
+<FONT COLOR="#0000FF"><B>#include&lt;ctype.h&gt;</B></FONT>
+<FONT COLOR="#0000FF"><B>#include&lt;math.h&gt;</B></FONT>
+
+<FONT COLOR="#0000FF"><B>#define MAXOP 100</B></FONT>
+<FONT COLOR="#0000FF"><B>#define NUMBER  0</B></FONT>
+<FONT COLOR="#0000FF"><B>#define TRUE 1</B></FONT>
+<FONT COLOR="#0000FF"><B>#define FALSE 0</B></FONT>
+
+<FONT COLOR="#008080">/* This programme is a basic calculator.
+
+Extra cases have been added to:
+1. Show the top item of the stack without permanently popping it.
+2. Swap the top two items on the stack.
+3. Duplicate the top item on the stack.
+4. Clear the stack.
+
+I have used functions for each of the new cases rather than have the
+code inline in order to limit the physical size of the switch block.
+
+In anticipation of the following exercise the following characters have
+been used for the operations (in the same order as above): ? ~ # !
+rather than use alphabetic characters.
+
+It is actually rather difficult to be original in this exercise.
+
+This is exercise 4-4 from Kernighan &amp; Ritchie, page 79.
+
+ */</FONT>
+
+<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">Getop</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">[]);</FONT>
+<B><FONT COLOR="#000080">void</FONT></B> <FONT COLOR="#008000">push</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">double</FONT></B> <FONT COLOR="#008000">val</FONT><FONT COLOR="#000080">);</FONT>
+<B><FONT COLOR="#000080">double</FONT></B> <FONT COLOR="#008000">pop</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">void</FONT></B><FONT COLOR="#000080">);</FONT>
+<B><FONT COLOR="#000080">void</FONT></B> <FONT COLOR="#008000">showTop</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">void</FONT></B><FONT COLOR="#000080">);</FONT>
+<B><FONT COLOR="#000080">void</FONT></B> <FONT COLOR="#008000">duplicate</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">void</FONT></B><FONT COLOR="#000080">);</FONT>
+<B><FONT COLOR="#000080">void</FONT></B> <FONT COLOR="#008000">swapItems</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">void</FONT></B><FONT COLOR="#000080">);</FONT>
+<B><FONT COLOR="#000080">void</FONT></B> <FONT COLOR="#008000">clearStack</FONT><FONT COLOR="#000080">();</FONT>
+
+<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">main</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">void</FONT></B><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+    <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">type</FONT><FONT COLOR="#000080">;</FONT>
+    <B><FONT COLOR="#000080">double</FONT></B> <FONT COLOR="#008000">op2</FONT><FONT COLOR="#000080">;</FONT>
+    <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">MAXOP</FONT><FONT COLOR="#000080">];</FONT>
+    <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">flag</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">TRUE</FONT><FONT COLOR="#000080">;</FONT>
+
+    <B><FONT COLOR="#000080">while</FONT></B><FONT COLOR="#000080">((</FONT><FONT COLOR="#008000">type</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">Getop</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">))</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#008000">EOF</FONT><FONT COLOR="#000080">)</FONT>
+    <FONT COLOR="#000080">{</FONT>
+        <B><FONT COLOR="#000080">switch</FONT></B><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">type</FONT><FONT COLOR="#000080">)</FONT>
+        <FONT COLOR="#000080">{</FONT>
+            <B><FONT COLOR="#000080">case</FONT></B> <FONT COLOR="#008000">NUMBER</FONT><FONT COLOR="#000080">:</FONT>
+                                <FONT COLOR="#008000">push</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">atof</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">));</FONT>
+                <B><FONT COLOR="#000080">break</FONT></B><FONT COLOR="#000080">;</FONT>
+            <B><FONT COLOR="#000080">case</FONT></B> <FONT COLOR="#000000"><B>'+'</B></FONT><FONT COLOR="#000080">:</FONT>
+                <FONT COLOR="#008000">push</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">pop</FONT><FONT COLOR="#000080">()</FONT> <FONT COLOR="#000080">+</FONT> <FONT COLOR="#008000">pop</FONT><FONT COLOR="#000080">());</FONT>
+                <B><FONT COLOR="#000080">break</FONT></B><FONT COLOR="#000080">;</FONT>
+            <B><FONT COLOR="#000080">case</FONT></B> <FONT COLOR="#000000"><B>'*'</B></FONT><FONT COLOR="#000080">:</FONT>
+                <FONT COLOR="#008000">push</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">pop</FONT><FONT COLOR="#000080">()</FONT> <FONT COLOR="#000080">*</FONT> <FONT COLOR="#008000">pop</FONT><FONT COLOR="#000080">());</FONT>
+                <B><FONT COLOR="#000080">break</FONT></B><FONT COLOR="#000080">;</FONT>
+            <B><FONT COLOR="#000080">case</FONT></B> <FONT COLOR="#000000"><B>'-'</B></FONT><FONT COLOR="#000080">:</FONT>
+                <FONT COLOR="#008000">op2</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">pop</FONT><FONT COLOR="#000080">();</FONT>
+                <FONT COLOR="#008000">push</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">pop</FONT><FONT COLOR="#000080">()-</FONT> <FONT COLOR="#008000">op2</FONT><FONT COLOR="#000080">);</FONT>
+                <B><FONT COLOR="#000080">break</FONT></B><FONT COLOR="#000080">;</FONT>
+            <B><FONT COLOR="#000080">case</FONT></B> <FONT COLOR="#000000"><B>'/'</B></FONT><FONT COLOR="#000080">:</FONT>
+                <FONT COLOR="#008000">op2</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">pop</FONT><FONT COLOR="#000080">();</FONT>
+                <B><FONT COLOR="#000080">if</FONT></B><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">op2</FONT><FONT COLOR="#000080">)</FONT>
+                    <FONT COLOR="#008000">push</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">pop</FONT><FONT COLOR="#000080">()</FONT> <FONT COLOR="#000080">/</FONT> <FONT COLOR="#008000">op2</FONT><FONT COLOR="#000080">);</FONT>
+                <B><FONT COLOR="#000080">else</FONT></B>
+                    <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;\nError: division by zero!&quot;</FONT><FONT COLOR="#000080">);</FONT>
+                <B><FONT COLOR="#000080">break</FONT></B><FONT COLOR="#000080">;</FONT>
+            <B><FONT COLOR="#000080">case</FONT></B> <FONT COLOR="#000000"><B>'%'</B></FONT><FONT COLOR="#000080">:</FONT>
+                <FONT COLOR="#008000">op2</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">pop</FONT><FONT COLOR="#000080">();</FONT>
+                <B><FONT COLOR="#000080">if</FONT></B><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">op2</FONT><FONT COLOR="#000080">)</FONT>
+                    <FONT COLOR="#008000">push</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">fmod</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">pop</FONT><FONT COLOR="#000080">(),</FONT> <FONT COLOR="#008000">op2</FONT><FONT COLOR="#000080">));</FONT>
+                <B><FONT COLOR="#000080">else</FONT></B>
+                    <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;\nError: division by zero!&quot;</FONT><FONT COLOR="#000080">);</FONT>
+                <B><FONT COLOR="#000080">break</FONT></B><FONT COLOR="#000080">;</FONT>
+            <B><FONT COLOR="#000080">case</FONT></B> <FONT COLOR="#000000"><B>'?'</B></FONT><FONT COLOR="#000080">:</FONT>
+                <FONT COLOR="#008000">showTop</FONT><FONT COLOR="#000080">();</FONT>
+                <B><FONT COLOR="#000080">break</FONT></B><FONT COLOR="#000080">;</FONT>
+            <B><FONT COLOR="#000080">case</FONT></B> <FONT COLOR="#000000"><B>'#'</B></FONT><FONT COLOR="#000080">:</FONT>
+                <FONT COLOR="#008000">duplicate</FONT><FONT COLOR="#000080">();</FONT>
+                <B><FONT COLOR="#000080">break</FONT></B><FONT COLOR="#000080">;</FONT>
+            <B><FONT COLOR="#000080">case</FONT></B> <FONT COLOR="#000000"><B>'~'</B></FONT><FONT COLOR="#000080">:</FONT>
+                <FONT COLOR="#008000">swapItems</FONT><FONT COLOR="#000080">();</FONT>
+                <B><FONT COLOR="#000080">break</FONT></B><FONT COLOR="#000080">;</FONT>
+            <B><FONT COLOR="#000080">case</FONT></B> <FONT COLOR="#000000"><B>'!'</B></FONT><FONT COLOR="#000080">:</FONT>
+                <FONT COLOR="#008000">clearStack</FONT><FONT COLOR="#000080">();</FONT>
+            <B><FONT COLOR="#000080">case</FONT></B> <FONT COLOR="#000000"><B>'\n'</B></FONT><FONT COLOR="#000080">:</FONT>
+                <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;\n\t%.8g\n&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">pop</FONT><FONT COLOR="#000080">());</FONT>
+                <B><FONT COLOR="#000080">break</FONT></B><FONT COLOR="#000080">;</FONT>
+            <B><FONT COLOR="#000080">default</FONT></B><FONT COLOR="#000080">:</FONT>
+                <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;\nError: unknown command %s.\n&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">);</FONT>
+                <B><FONT COLOR="#000080">break</FONT></B><FONT COLOR="#000080">;</FONT>
+        <FONT COLOR="#000080">}</FONT>
+    <FONT COLOR="#000080">}</FONT>
+    <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#008000">EXIT_SUCCESS</FONT><FONT COLOR="#000080">;</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+<FONT COLOR="#0000FF"><B>#define MAXVAL 100</B></FONT>
+
+<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">sp</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>          <FONT COLOR="#008080">/* Next free stack position. */</FONT>
+<B><FONT COLOR="#000080">double</FONT></B> <FONT COLOR="#008000">val</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">MAXVAL</FONT><FONT COLOR="#000080">];</FONT>  <FONT COLOR="#008080">/* value stack. */</FONT>
+
+<FONT COLOR="#008080">/* push: push f onto stack. */</FONT>
+<B><FONT COLOR="#000080">void</FONT></B> <FONT COLOR="#008000">push</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">double</FONT></B> <FONT COLOR="#008000">f</FONT><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+    <B><FONT COLOR="#000080">if</FONT></B><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">sp</FONT> <FONT COLOR="#000080">&lt;</FONT> <FONT COLOR="#008000">MAXVAL</FONT><FONT COLOR="#000080">)</FONT>
+        <FONT COLOR="#008000">val</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">sp</FONT><FONT COLOR="#000080">++]</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">f</FONT><FONT COLOR="#000080">;</FONT>
+    <B><FONT COLOR="#000080">else</FONT></B>
+         <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;\nError: stack full can't push %g\n&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">f</FONT><FONT COLOR="#000080">);</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+<FONT COLOR="#008080">/*pop: pop and return top value from stack.*/</FONT>
+<B><FONT COLOR="#000080">double</FONT></B> <FONT COLOR="#008000">pop</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">void</FONT></B><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+    <B><FONT COLOR="#000080">if</FONT></B><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">sp</FONT> <FONT COLOR="#000080">&gt;</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">)</FONT>
+        <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#008000">val</FONT><FONT COLOR="#000080">[--</FONT><FONT COLOR="#008000">sp</FONT><FONT COLOR="#000080">];</FONT>
+    <B><FONT COLOR="#000080">else</FONT></B>
+    <FONT COLOR="#000080">{</FONT>
+        <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;\nError: stack empty\n&quot;</FONT><FONT COLOR="#000080">);</FONT>
+        <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000000"><B>.0</B></FONT><FONT COLOR="#000080">;</FONT>
+    <FONT COLOR="#000080">}</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+<B><FONT COLOR="#000080">void</FONT></B> <FONT COLOR="#008000">showTop</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">void</FONT></B><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+    <B><FONT COLOR="#000080">if</FONT></B><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">sp</FONT> <FONT COLOR="#000080">&gt;</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">)</FONT>
+        <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;Top of stack contains: %8g\n&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">val</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">sp</FONT><FONT COLOR="#000080">-</FONT><FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">]);</FONT>
+    <B><FONT COLOR="#000080">else</FONT></B>
+        <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;The stack is empty!\n&quot;</FONT><FONT COLOR="#000080">);</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+
+<B><FONT COLOR="#000080">void</FONT></B> <FONT COLOR="#008000">duplicate</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">void</FONT></B><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+    <B><FONT COLOR="#000080">double</FONT></B> <FONT COLOR="#008000">temp</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">pop</FONT><FONT COLOR="#000080">();</FONT>
+
+    <FONT COLOR="#008000">push</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">temp</FONT><FONT COLOR="#000080">);</FONT>
+    <FONT COLOR="#008000">push</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">temp</FONT><FONT COLOR="#000080">);</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+<B><FONT COLOR="#000080">void</FONT></B> <FONT COLOR="#008000">swapItems</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">void</FONT></B><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+    <B><FONT COLOR="#000080">double</FONT></B> <FONT COLOR="#008000">item1</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">pop</FONT><FONT COLOR="#000080">();</FONT>
+    <B><FONT COLOR="#000080">double</FONT></B> <FONT COLOR="#008000">item2</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">pop</FONT><FONT COLOR="#000080">();</FONT>
+
+    <FONT COLOR="#008000">push</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">item1</FONT><FONT COLOR="#000080">);</FONT>
+    <FONT COLOR="#008000">push</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">item2</FONT><FONT COLOR="#000080">);</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+<FONT COLOR="#008080">/* pop only returns a value if sp is greater than zero. So setting the
+stack pointer to zero will cause pop to return its error */</FONT>
+
+<B><FONT COLOR="#000080">void</FONT></B> <FONT COLOR="#008000">clearStack</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">void</FONT></B><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+    <FONT COLOR="#008000">sp</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">getch</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">void</FONT></B><FONT COLOR="#000080">);</FONT>
+<B><FONT COLOR="#000080">void</FONT></B> <FONT COLOR="#008000">unGetch</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">int</FONT></B><FONT COLOR="#000080">);</FONT>
+
+<FONT COLOR="#008080">/* Getop: get next operator or numeric operand. */</FONT>
+<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">Getop</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">[])</FONT>
+<FONT COLOR="#000080">{</FONT>
+    <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">i</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+    <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">;</FONT>
+    <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">next</FONT><FONT COLOR="#000080">;</FONT>
+
+    <FONT COLOR="#008080">/* Skip whitespace */</FONT>
+    <B><FONT COLOR="#000080">while</FONT></B><FONT COLOR="#000080">((</FONT><FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">getch</FONT><FONT COLOR="#000080">())</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>' '</B></FONT> <FONT COLOR="#000080">||</FONT> <FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'\t'</B></FONT><FONT COLOR="#000080">)</FONT>
+        <FONT COLOR="#000080">;</FONT>
+    <FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>'\0'</B></FONT><FONT COLOR="#000080">;</FONT>
+
+    <FONT COLOR="#008080">/* Not a number but may contain a unary minus. */</FONT>
+    <B><FONT COLOR="#000080">if</FONT></B><FONT COLOR="#000080">(!</FONT><FONT COLOR="#008000">isdigit</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">&amp;&amp;</FONT> <FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#000000"><B>'.'</B></FONT> <FONT COLOR="#000080">&amp;&amp;</FONT> <FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#000000"><B>'-'</B></FONT><FONT COLOR="#000080">)</FONT>
+        <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">;</FONT>               
+
+    <B><FONT COLOR="#000080">if</FONT></B><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'-'</B></FONT><FONT COLOR="#000080">)</FONT>
+    <FONT COLOR="#000080">{</FONT>
+        <FONT COLOR="#008000">next</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">getch</FONT><FONT COLOR="#000080">();</FONT>
+        <B><FONT COLOR="#000080">if</FONT></B><FONT COLOR="#000080">(!</FONT><FONT COLOR="#008000">isdigit</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">next</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">&amp;&amp;</FONT> <FONT COLOR="#008000">next</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#000000"><B>'.'</B></FONT><FONT COLOR="#000080">)</FONT>
+        <FONT COLOR="#000080">{</FONT>
+           <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">;</FONT>
+        <FONT COLOR="#000080">}</FONT>
+        <FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">next</FONT><FONT COLOR="#000080">;</FONT>
+    <FONT COLOR="#000080">}</FONT>
+    <B><FONT COLOR="#000080">else</FONT></B>
+        <FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">getch</FONT><FONT COLOR="#000080">();</FONT>
+ 
+    <B><FONT COLOR="#000080">while</FONT></B><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">isdigit</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">[++</FONT><FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">))</FONT>
+            <FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">getch</FONT><FONT COLOR="#000080">();</FONT>
+    <B><FONT COLOR="#000080">if</FONT></B><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'.'</B></FONT><FONT COLOR="#000080">)</FONT>                        <FONT COLOR="#008080">/* Collect fraction part. */</FONT>
+        <B><FONT COLOR="#000080">while</FONT></B><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">isdigit</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">[++</FONT><FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">getch</FONT><FONT COLOR="#000080">()))</FONT>
+                        <FONT COLOR="#000080">;</FONT>
+    <FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>'\0'</B></FONT><FONT COLOR="#000080">;</FONT>
+    <B><FONT COLOR="#000080">if</FONT></B><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#008000">EOF</FONT><FONT COLOR="#000080">)</FONT>
+        <FONT COLOR="#008000">unGetch</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">);</FONT>
+    <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#008000">NUMBER</FONT><FONT COLOR="#000080">;</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+<FONT COLOR="#0000FF"><B>#define BUFSIZE 100</B></FONT>
+
+<B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#008000">buf</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">BUFSIZE</FONT><FONT COLOR="#000080">];</FONT>
+<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">bufp</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+
+<FONT COLOR="#008080">/* Getch: get a ( possibly pushed back) character. */</FONT>
+<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">getch</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">void</FONT></B><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+     <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">bufp</FONT> <FONT COLOR="#000080">&gt;</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">?</FONT> <FONT COLOR="#008000">buf</FONT><FONT COLOR="#000080">[--</FONT><FONT COLOR="#008000">bufp</FONT><FONT COLOR="#000080">]:</FONT> <FONT COLOR="#008000">getchar</FONT><FONT COLOR="#000080">();</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+<FONT COLOR="#008080">/* unGetch: push character back on input. */</FONT>
+<B><FONT COLOR="#000080">void</FONT></B> <FONT COLOR="#008000">unGetch</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+    <B><FONT COLOR="#000080">if</FONT></B><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">bufp</FONT> <FONT COLOR="#000080">&gt;=</FONT> <FONT COLOR="#008000">BUFSIZE</FONT><FONT COLOR="#000080">)</FONT>
+        <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;\nUnGetch: too many characters\n&quot;</FONT><FONT COLOR="#000080">);</FONT>
+    <B><FONT COLOR="#000080">else</FONT></B>
+        <FONT COLOR="#008000">buf</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">bufp</FONT><FONT COLOR="#000080">++]</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">;</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+</pre>
+</code>
+
+<br>
+<br>
+
+
+<a href=index.html>  Back to index </a></body></html>

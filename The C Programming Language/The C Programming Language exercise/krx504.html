@@ -1,0 +1,137 @@
+<html>
+  <head>
+
+    <title>
+      The C Programming Language Exercise 5-4
+    </title>
+
+  <BODY    text="#000000"
+        bgcolor="#DDDDDD"
+           link="#800000"
+          alink="#008000"
+          vlink="#000080">
+
+
+<center>
+<h2>
+  &quot;The C Programming Language&quot;, 2nd edition, Kernighan and Ritchie
+</h2>
+<h3>
+  Answer to Exercise 5-4, page 107
+</h3>
+<h4>
+  Solution by <a href=mailto:gfd34@dial.pipex.com>  Bryan Williams </a>
+</h4>
+</center>
+
+<i>
+Write the function <code>strend(s,t)</code> , which returns 1 if the
+string <code>t</code> occurs at the end of the string <code>s</code> , and zero otherwise.
+</i>
+<br>
+<br>
+
+<code>
+<pre>
+<FONT COLOR="#008080">/*
+
+    Exercise 5-4. Write the function strend(s,t), which returns 1 if the string t 
+                  occurs at the end of the string s, and zero otherwise.
+
+    Author : Bryan Williams
+
+*/</FONT>
+
+
+<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">strlen</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#008080">/* added by RJH; source: K&amp;R p99 */</FONT>
+<FONT COLOR="#000080">{</FONT>
+  <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">n</FONT><FONT COLOR="#000080">;</FONT>
+
+  <B><FONT COLOR="#000080">for</FONT></B><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">n</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">s</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#000000"><B>'\0'</B></FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">++)</FONT>
+  <FONT COLOR="#000080">{</FONT>
+    <FONT COLOR="#008000">n</FONT><FONT COLOR="#000080">++;</FONT>
+  <FONT COLOR="#000080">}</FONT>
+  <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#008000">n</FONT><FONT COLOR="#000080">;</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">strcmp</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">,</FONT> <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">t</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#008080">/* added by RJH; source: K&amp;R p106 */</FONT>
+<FONT COLOR="#000080">{</FONT>
+  <B><FONT COLOR="#000080">for</FONT></B><FONT COLOR="#000080">(;*</FONT><FONT COLOR="#008000">s</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">t</FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">++,</FONT> <FONT COLOR="#008000">t</FONT><FONT COLOR="#000080">++)</FONT>
+    <B><FONT COLOR="#000080">if</FONT></B><FONT COLOR="#000080">(*</FONT><FONT COLOR="#008000">s</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'\0'</B></FONT><FONT COLOR="#000080">)</FONT>
+      <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+  <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">s</FONT> <FONT COLOR="#000080">-</FONT> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">t</FONT><FONT COLOR="#000080">;</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+
+<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">strend</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">,</FONT> <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">t</FONT><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+  <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">Result</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+  <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">s_length</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+  <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">t_length</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+
+  <FONT COLOR="#008080">/* get the lengths of the strings */</FONT>
+  <FONT COLOR="#008000">s_length</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">strlen</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">);</FONT>
+  <FONT COLOR="#008000">t_length</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">strlen</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">t</FONT><FONT COLOR="#000080">);</FONT>
+
+  <FONT COLOR="#008080">/* check if the lengths mean that the string t could fit at the string s */</FONT>
+  <B><FONT COLOR="#000080">if</FONT></B><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">t_length</FONT> <FONT COLOR="#000080">&lt;=</FONT> <FONT COLOR="#008000">s_length</FONT><FONT COLOR="#000080">)</FONT>
+  <FONT COLOR="#000080">{</FONT>
+    <FONT COLOR="#008080">/* advance the s pointer to where the string t would have to start in string s */</FONT>
+    <FONT COLOR="#008000">s</FONT> <FONT COLOR="#000080">+=</FONT> <FONT COLOR="#008000">s_length</FONT> <FONT COLOR="#000080">-</FONT> <FONT COLOR="#008000">t_length</FONT><FONT COLOR="#000080">;</FONT>
+
+    <FONT COLOR="#008080">/* and make the compare using strcmp */</FONT>
+    <B><FONT COLOR="#000080">if</FONT></B><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000"><B>0</B></FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#008000">strcmp</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">t</FONT><FONT COLOR="#000080">))</FONT>
+    <FONT COLOR="#000080">{</FONT>
+      <FONT COLOR="#008000">Result</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">;</FONT>
+    <FONT COLOR="#000080">}</FONT>
+  <FONT COLOR="#000080">}</FONT>
+
+  <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#008000">Result</FONT><FONT COLOR="#000080">;</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+
+
+<FONT COLOR="#0000FF"><B>#include &lt;stdio.h&gt;</B></FONT>
+
+
+<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">main</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">void</FONT></B><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+  <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">s1</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000">&quot;some really long string.&quot;</FONT><FONT COLOR="#000080">;</FONT>
+  <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">s2</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000">&quot;ng.&quot;</FONT><FONT COLOR="#000080">;</FONT>
+  <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">s3</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000">&quot;ng&quot;</FONT><FONT COLOR="#000080">;</FONT>
+
+  <B><FONT COLOR="#000080">if</FONT></B><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">strend</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">s1</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">s2</FONT><FONT COLOR="#000080">))</FONT>
+  <FONT COLOR="#000080">{</FONT>
+    <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;The string (%s) has (%s) at the end.\n&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">s1</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">s2</FONT><FONT COLOR="#000080">);</FONT>
+  <FONT COLOR="#000080">}</FONT>
+  <B><FONT COLOR="#000080">else</FONT></B>
+  <FONT COLOR="#000080">{</FONT>
+    <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;The string (%s) doesn't have (%s) at the end.\n&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">s1</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">s2</FONT><FONT COLOR="#000080">);</FONT>
+  <FONT COLOR="#000080">}</FONT>
+  <B><FONT COLOR="#000080">if</FONT></B><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">strend</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">s1</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">s3</FONT><FONT COLOR="#000080">))</FONT>
+  <FONT COLOR="#000080">{</FONT>
+    <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;The string (%s) has (%s) at the end.\n&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">s1</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">s3</FONT><FONT COLOR="#000080">);</FONT>
+  <FONT COLOR="#000080">}</FONT>
+  <B><FONT COLOR="#000080">else</FONT></B>
+  <FONT COLOR="#000080">{</FONT>
+    <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;The string (%s) doesn't have (%s) at the end.\n&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">s1</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">s3</FONT><FONT COLOR="#000080">);</FONT>
+  <FONT COLOR="#000080">}</FONT>
+
+  <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+
+
+
+
+
+
+
+</pre>
+</code>
+
+
+<br>
+<br>
+
+<a href=index.html>  Back to index </a></body></html>

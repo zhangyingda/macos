@@ -1,0 +1,136 @@
+<html>
+  <head>
+
+    <title>
+      The C Programming Language Exercise 2-8
+    </title>
+
+  <BODY    text="#000000"
+        bgcolor="#DDDDDD"
+           link="#800000"
+          alink="#008000"
+          vlink="#000080">
+
+
+<center>
+<h2>
+  &quot;The C Programming Language&quot;, 2nd edition, Kernighan and Ritchie
+</h2>
+<h3>
+  Answer to Exercise 2-8, page 49
+</h3>
+<h4>
+  Solutions by <a href=mailto:gkp1@flash.net>  Gregory Pietsch </a> and <a href=mailto:bob@pattinson.demon.co.uk>  Bob Wightman </a>
+</h4>
+</center>
+
+<i>
+Write a function <code>rightrot(x,n)</code> that returns the value of the integer <code>x</code> rotated to the
+right by <code>n</code> bit positions.
+</i>
+<br>
+<br>
+Greg's Cat 0 solution
+<br>
+<br>
+<code>
+<pre>
+<B><FONT COLOR="#000080">unsigned</FONT></B> <FONT COLOR="#008000">rightrot</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">unsigned</FONT></B> <FONT COLOR="#008000">x</FONT><FONT COLOR="#000080">,</FONT> <B><FONT COLOR="#000080">unsigned</FONT></B> <FONT COLOR="#008000">n</FONT><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+    <B><FONT COLOR="#000080">while</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">n</FONT> <FONT COLOR="#000080">&gt;</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+        <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">((</FONT><FONT COLOR="#008000">x</FONT> <FONT COLOR="#000080">&amp;</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">)</FONT>
+            <FONT COLOR="#008000">x</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">x</FONT> <FONT COLOR="#000080">&gt;&gt;</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">|</FONT> <FONT COLOR="#000080">~(~</FONT><FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#008000">U</FONT> <FONT COLOR="#000080">&gt;&gt;</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">);</FONT>
+        <B><FONT COLOR="#000080">else</FONT></B>
+            <FONT COLOR="#008000">x</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">x</FONT> <FONT COLOR="#000080">&gt;&gt;</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">);</FONT>
+        <FONT COLOR="#008000">n</FONT><FONT COLOR="#000080">--;</FONT>
+    <FONT COLOR="#000080">}</FONT>
+    <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#008000">x</FONT><FONT COLOR="#000080">;</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+<FONT COLOR="#008080">/* main driver added, in a hurry while tired, by RJH. Better test driver suggestions are welcomed! */</FONT>
+
+<FONT COLOR="#0000FF"><B>#include &lt;stdio.h&gt;</B></FONT>
+
+<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">main</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">void</FONT></B><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+  <B><FONT COLOR="#000080">unsigned</FONT></B> <FONT COLOR="#008000">x</FONT><FONT COLOR="#000080">;</FONT>
+  <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">n</FONT><FONT COLOR="#000080">;</FONT>
+
+  <B><FONT COLOR="#000080">for</FONT></B><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">x</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008000">x</FONT> <FONT COLOR="#000080">&lt;</FONT> <FONT COLOR="#000000"><B>700</B></FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008000">x</FONT> <FONT COLOR="#000080">+=</FONT> <FONT COLOR="#000000"><B>49</B></FONT><FONT COLOR="#000080">)</FONT>
+    <B><FONT COLOR="#000080">for</FONT></B><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">n</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008000">n</FONT> <FONT COLOR="#000080">&lt;</FONT> <FONT COLOR="#000000"><B>8</B></FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008000">n</FONT><FONT COLOR="#000080">++)</FONT>
+      <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;%u, %d: %u\n&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">x</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">n</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">rightrot</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">x</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">n</FONT><FONT COLOR="#000080">));</FONT>
+  <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+<FONT COLOR="#000080">}</FONT>
+</pre>
+</code>
+
+
+<br>
+<br>
+<br>
+<br>
+Here's Bob Wightman's Cat 1 solution:
+<br>
+<br>
+<code>
+<pre>
+<FONT COLOR="#008080">/* K&amp;R exercise 2-8 
+
+It is class 1 due to the /sizeof/ operator (CHAR_BIT is introduced with
+&lt;limits.h&gt; in Chapter 1). I could have used the conditional operator but
+thought that this is clearer.
+
+Notes:
+1. Implicit int removed (not absolutely necessary but...)
+2. Checks for the size of the shift and reduces it to the range 0 -
+(number of bits in an int) - 1 This is to avoid right shifting the
+number into oblivion.
+3. If either the value or the shift is zero then nothing need to be done
+to the parameter so just return it.
+
+*/</FONT>
+
+<B><FONT COLOR="#000080">unsigned</FONT></B> <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">rightrot</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">unsigned</FONT></B> <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">x</FONT><FONT COLOR="#000080">,</FONT> <B><FONT COLOR="#000080">unsigned</FONT></B> <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">n</FONT><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+   <FONT COLOR="#008080">/* calculate number of bits in type */</FONT>
+   <FONT COLOR="#008000">size_t</FONT> <FONT COLOR="#008000">s</FONT> <FONT COLOR="#000080">=</FONT> <B><FONT COLOR="#000080">sizeof</FONT></B><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">x</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">*</FONT> <FONT COLOR="#008000">CHAR_BIT</FONT><FONT COLOR="#000080">;</FONT>
+   <FONT COLOR="#008000">size_t</FONT> <FONT COLOR="#008000">p</FONT><FONT COLOR="#000080">;</FONT>
+
+   <FONT COLOR="#008080">/* limit shift to range 0 - (s - 1) */</FONT>
+   <B><FONT COLOR="#000080">if</FONT></B><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">n</FONT> <FONT COLOR="#000080">&lt;</FONT> <FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">)</FONT>
+       <FONT COLOR="#008000">p</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">n</FONT><FONT COLOR="#000080">;</FONT> 
+   <B><FONT COLOR="#000080">else</FONT></B>
+       <FONT COLOR="#008000">p</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">n</FONT> <FONT COLOR="#000080">%</FONT> <FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">;</FONT>
+
+   <FONT COLOR="#008080">/* if either is zero then the original value is unchanged */</FONT>
+   <B><FONT COLOR="#000080">if</FONT></B><FONT COLOR="#000080">((</FONT><FONT COLOR="#000000"><B>0</B></FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#008000">x</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">||</FONT> <FONT COLOR="#000080">(</FONT><FONT COLOR="#000000"><B>0</B></FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#008000">p</FONT><FONT COLOR="#000080">))</FONT>
+       <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#008000">x</FONT><FONT COLOR="#000080">;</FONT>
+
+   <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">x</FONT> <FONT COLOR="#000080">&gt;&gt;</FONT> <FONT COLOR="#008000">p</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">|</FONT> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">x</FONT> <FONT COLOR="#000080">&lt;&lt;</FONT> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">s</FONT> <FONT COLOR="#000080">-</FONT> <FONT COLOR="#008000">p</FONT><FONT COLOR="#000080">));</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+<FONT COLOR="#008080">/* Driver based on yours but runs the shift values beyond the size of an
+unsigned integer on any system */</FONT>
+
+<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">main</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">void</FONT></B><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+   <B><FONT COLOR="#000080">unsigned</FONT></B> <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">val</FONT><FONT COLOR="#000080">;</FONT>
+   <B><FONT COLOR="#000080">unsigned</FONT></B> <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">pos</FONT><FONT COLOR="#000080">;</FONT>
+   <B><FONT COLOR="#000080">unsigned</FONT></B> <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">max</FONT> <FONT COLOR="#000080">=</FONT> <B><FONT COLOR="#000080">sizeof</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">pos</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">*</FONT> <FONT COLOR="#008000">CHAR_BIT</FONT> <FONT COLOR="#000080">+</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">;</FONT>
+
+   <B><FONT COLOR="#000080">for</FONT></B><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">val</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008000">val</FONT> <FONT COLOR="#000080">&lt;</FONT> <FONT COLOR="#000000"><B>700</B></FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008000">val</FONT> <FONT COLOR="#000080">+=</FONT> <FONT COLOR="#000000"><B>49</B></FONT><FONT COLOR="#000080">)</FONT>
+   <FONT COLOR="#000080">{</FONT>
+      <B><FONT COLOR="#000080">for</FONT></B><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">pos</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008000">pos</FONT> <FONT COLOR="#000080">&lt;</FONT> <FONT COLOR="#008000">max</FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#000080">++</FONT><FONT COLOR="#008000">pos</FONT><FONT COLOR="#000080">)</FONT>
+      <FONT COLOR="#000080">{</FONT>
+         <FONT COLOR="#008000">printf</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;%u, %d: %u\n&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">x</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">n</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">rightrot</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">val</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">pos</FONT><FONT COLOR="#000080">));</FONT>
+      <FONT COLOR="#000080">}</FONT>
+   <FONT COLOR="#000080">}</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+</pre>
+</code>
+
+<br>
+<br>
+
+<a href=index.html>  Back to index </a></body></html>

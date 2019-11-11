@@ -1,0 +1,139 @@
+<html>
+  <head>
+
+    <title>
+      The C Programming Language Exercise 5-7
+    </title>
+
+  <BODY    text="#000000"
+        bgcolor="#DDDDDD"
+           link="#800000"
+          alink="#008000"
+          vlink="#000080">
+
+
+<center>
+<h2>
+  &quot;The C Programming Language&quot;, 2nd edition, Kernighan and Ritchie
+</h2>
+<h3>
+  Answer to Exercise 5-7, page 110
+</h3>
+<h4>
+  Solution by <a href=mailto:steven.huang@iname.com>  Steven Huang </a>
+</h4>
+</center>
+
+<i>
+Rewrite <code>readlines</code> to store lines in an array supplied by <code>main</code> ,
+rather than calling <code>alloc</code> to maintain storage. How much faster is
+the program?
+</i>
+<br>
+<br>
+<code>
+<pre>
+<FONT COLOR="#008080">/* K&amp;R Exercise 5-7 */</FONT>
+<FONT COLOR="#008080">/* Steven Huang */</FONT>
+
+<FONT COLOR="#0000FF"><B>#include &lt;stdio.h&gt;</B></FONT>
+<FONT COLOR="#0000FF"><B>#include &lt;string.h&gt;</B></FONT>
+<FONT COLOR="#0000FF"><B>#include &lt;stdlib.h&gt;</B></FONT>
+<FONT COLOR="#0000FF"><B>#include &lt;time.h&gt;</B></FONT>
+
+<FONT COLOR="#0000FF"><B>#define TRUE     1</B></FONT>
+<FONT COLOR="#0000FF"><B>#define FALSE    0</B></FONT>
+
+<FONT COLOR="#0000FF"><B>#define MAXLINES 5000       /* maximum number of lines */</B></FONT>
+<FONT COLOR="#0000FF"><B>#define MAXLEN   1000       /* maximum length of a line */</B></FONT>
+<B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">lineptr</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">MAXLINES</FONT><FONT COLOR="#000080">];</FONT>
+<B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#008000">lines</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">MAXLINES</FONT><FONT COLOR="#000080">][</FONT><FONT COLOR="#008000">MAXLEN</FONT><FONT COLOR="#000080">];</FONT>
+
+<FONT COLOR="#008080">/* K&amp;R2 p29 */</FONT>
+<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">getline</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">[],</FONT> <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">lim</FONT><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+  <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">;</FONT>
+
+  <B><FONT COLOR="#000080">for</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">i</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008000">i</FONT> <FONT COLOR="#000080">&lt;</FONT> <FONT COLOR="#008000">lim</FONT> <FONT COLOR="#000080">-</FONT> <FONT COLOR="#000000"><B>1</B></FONT> <FONT COLOR="#000080">&amp;&amp;</FONT> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">getchar</FONT><FONT COLOR="#000080">())</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#008000">EOF</FONT> <FONT COLOR="#000080">&amp;&amp;</FONT> <FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#000000"><B>'\n'</B></FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">++)</FONT>
+    <FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">;</FONT>                                                         
+  <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'\n'</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+    <FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">++]</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">;</FONT>   
+  <FONT COLOR="#000080">}</FONT>
+  <FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>'\0'</B></FONT><FONT COLOR="#000080">;</FONT>
+  <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">;</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+<FONT COLOR="#008080">/* K&amp;R2 p109 */</FONT>
+<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">readlines</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">lineptr</FONT><FONT COLOR="#000080">[],</FONT> <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">maxlines</FONT><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+  <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">len</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">nlines</FONT><FONT COLOR="#000080">;</FONT>
+  <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">p</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">line</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">MAXLEN</FONT><FONT COLOR="#000080">];</FONT>
+
+  <FONT COLOR="#008000">nlines</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+  <B><FONT COLOR="#000080">while</FONT></B> <FONT COLOR="#000080">((</FONT><FONT COLOR="#008000">len</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">getline</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">line</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">MAXLEN</FONT><FONT COLOR="#000080">))</FONT> <FONT COLOR="#000080">&gt;</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">)</FONT>
+    <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">nlines</FONT> <FONT COLOR="#000080">&gt;=</FONT> <FONT COLOR="#008000">maxlines</FONT> <FONT COLOR="#000080">||</FONT> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">p</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">malloc</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">len</FONT><FONT COLOR="#000080">))</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">)</FONT>
+      <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#000080">-</FONT><FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">;</FONT>
+    <B><FONT COLOR="#000080">else</FONT></B> <FONT COLOR="#000080">{</FONT>
+      <FONT COLOR="#008000">line</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">len</FONT> <FONT COLOR="#000080">-</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>'\0'</B></FONT><FONT COLOR="#000080">;</FONT>  <FONT COLOR="#008080">/* delete the newline */</FONT>
+      <FONT COLOR="#008000">strcpy</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">p</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">line</FONT><FONT COLOR="#000080">);</FONT>
+      <FONT COLOR="#008000">lineptr</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">nlines</FONT><FONT COLOR="#000080">++]</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">p</FONT><FONT COLOR="#000080">;</FONT>
+    <FONT COLOR="#000080">}</FONT>                       
+  <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#008000">nlines</FONT><FONT COLOR="#000080">;</FONT>  
+<FONT COLOR="#000080">}</FONT>
+
+<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">readlines2</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#008000">lines</FONT><FONT COLOR="#000080">[][</FONT><FONT COLOR="#008000">MAXLEN</FONT><FONT COLOR="#000080">],</FONT> <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">maxlines</FONT><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+  <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">len</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">nlines</FONT><FONT COLOR="#000080">;</FONT>
+
+  <FONT COLOR="#008000">nlines</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+  <B><FONT COLOR="#000080">while</FONT></B> <FONT COLOR="#000080">((</FONT><FONT COLOR="#008000">len</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">getline</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">lines</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">nlines</FONT><FONT COLOR="#000080">],</FONT> <FONT COLOR="#008000">MAXLEN</FONT><FONT COLOR="#000080">))</FONT> <FONT COLOR="#000080">&gt;</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">)</FONT>
+    <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">nlines</FONT> <FONT COLOR="#000080">&gt;=</FONT> <FONT COLOR="#008000">maxlines</FONT><FONT COLOR="#000080">)</FONT>                         
+      <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#000080">-</FONT><FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">;</FONT>           
+    <B><FONT COLOR="#000080">else</FONT></B>
+      <FONT COLOR="#008000">lines</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">nlines</FONT><FONT COLOR="#000080">++][</FONT><FONT COLOR="#008000">len</FONT> <FONT COLOR="#000080">-</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>'\0'</B></FONT><FONT COLOR="#000080">;</FONT>  <FONT COLOR="#008080">/* delete the newline */</FONT>
+  <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#008000">nlines</FONT><FONT COLOR="#000080">;</FONT>
+<FONT COLOR="#000080">}</FONT>
+ 
+<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">main</FONT><FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">argc</FONT><FONT COLOR="#000080">,</FONT> <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">[])</FONT>
+<FONT COLOR="#000080">{</FONT>
+  <FONT COLOR="#008080">/* read things into cache, to be fair. */</FONT>
+  <FONT COLOR="#008000">readlines2</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">lines</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">MAXLINES</FONT><FONT COLOR="#000080">);</FONT>
+
+  <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">argc</FONT> <FONT COLOR="#000080">&gt;</FONT> <FONT COLOR="#000000"><B>1</B></FONT> <FONT COLOR="#000080">&amp;&amp;</FONT> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">argv</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'2'</B></FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">{</FONT>
+    <FONT COLOR="#008000">puts</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;readlines2()&quot;</FONT><FONT COLOR="#000080">);</FONT>           
+    <FONT COLOR="#008000">readlines2</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">lines</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">MAXLINES</FONT><FONT COLOR="#000080">);</FONT>
+  <FONT COLOR="#000080">}</FONT> <B><FONT COLOR="#000080">else</FONT></B> <FONT COLOR="#000080">{</FONT>
+    <FONT COLOR="#008000">puts</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;readlines()&quot;</FONT><FONT COLOR="#000080">);</FONT>
+    <FONT COLOR="#008000">readlines</FONT><FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">lineptr</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">MAXLINES</FONT><FONT COLOR="#000080">);</FONT>
+  <FONT COLOR="#000080">}</FONT>
+   
+  <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+<FONT COLOR="#000080">}</FONT>
+</pre>
+</code>
+
+<br>
+<br>
+Steven writes:
+&quot;Unfortunately, the follow-up question here on which
+version is faster is difficult to determine on my
+machine, because the difference is very small.  I
+can call <code>malloc()</code> one million times in under a
+second - this suggests that the conventional wisdom
+that <code>malloc()</code> is slow and should be avoided may need
+some more adjustment.&quot;
+<br>
+<br>
+[Editor's note: That's probably because <code>malloc</code> is actually
+taking memory requests to the system as infrequently as possible,
+so that most of the calls invoke little more than pointer
+arithmetic. This suggests that the conventional wisdom may be
+based on real world programs, rather than artificial &quot;how
+many <code>mallocs</code> per second can I do&quot; benchmarks. :-) ]
+<br>
+<br>
+[This space reserved for Steven's right of reply!]
+<br>
+<br>
+
+<a href=index.html>  Back to index </a></body></html>

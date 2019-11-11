@@ -1,0 +1,485 @@
+<html>
+  <head>
+
+    <title>
+      The C Programming Language Exercise 6-1
+    </title>
+
+  <BODY    text="#000000"
+        bgcolor="#DDDDDD"
+           link="#800000"
+          alink="#008000"
+          vlink="#000080">
+
+
+<center>
+<h2>
+  &quot;The C Programming Language&quot;, 2nd edition, Kernighan and Ritchie
+</h2>
+<h3>
+  Answer to Exercise 6-1, page 136
+</h3>
+<h4>
+  Solution by <a href=mailto:pfaffben@msu.edu>  Ben Pfaff </a>
+</h4>
+
+<br>
+<h4>
+Regis (a comp.lang.c regular) also provided a solution, which was far too big to post here.
+It may still be available from <a href=http://www.info.unicaen.fr/~regis/getword.html>  his website. </a>
+</h4>
+<br>
+
+</center>
+
+<i>
+Our version of <code>getword</code> does not properly handle underscores, string constants, comments, or
+preprocessor control lines. Write a better version.
+</i>
+<br>
+<br>
+
+<br>
+<code>
+<pre>
+<FONT COLOR="#008080">/* K&amp;R 6-1: &quot;Our version of getword() does not properly handle
+   underscores, string constants, or preprocessor control lines.
+   Write a better version.&quot;
+
+   This is intended to be a solution to K&amp;R 6-1 in &quot;category 0&quot; as
+   defined by the official rules given on Richard Heathfield's &quot;The C
+   Programming Language Answers To Exercises&quot; page, found at
+   http://users.powernet.co.uk/eton/kandr2/index.html.
+
+   For more information on the language for which this is a lexical
+   analyzer, please see the comment preceding getword() below.
+
+   Note that there is a small modification to ungetch() as defined by
+   K&amp;R.  Hopefully this lies within the rules. */</FONT>
+
+<FONT COLOR="#008080">/* knr61.c - answer to K&amp;R2 exercise 6-1.
+   Copyright (C) 2000 Ben Pfaff &lt;blp@gnu.org&gt;.
+
+   This program is free software; you can redistribute it and/or
+   modify it under the terms of the GNU General Public License as
+   published by the Free Software Foundation; either version 2 of the
+   License, or (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful, but
+   WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+   General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+   02111-1307, USA. */</FONT>
+<FONT COLOR="#0000FF"><B>#include &lt;ctype.h&gt;</B></FONT>
+<FONT COLOR="#0000FF"><B>#include &lt;limits.h&gt;</B></FONT>
+<FONT COLOR="#0000FF"><B>#include &lt;stdio.h&gt;</B></FONT>
+<FONT COLOR="#0000FF"><B>#include &lt;stdlib.h&gt;</B></FONT>
+<FONT COLOR="#0000FF"><B>#include &lt;string.h&gt;</B></FONT>
+
+<FONT COLOR="#008080">/* Tokens.  Other non-whitespace characters self-represent themselves
+   as tokens. */</FONT>
+<B><FONT COLOR="#000080">enum</FONT></B> <FONT COLOR="#008000">token</FONT>
+  <FONT COLOR="#000080">{</FONT>
+    <FONT COLOR="#008000">TOK_ID</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">UCHAR_MAX</FONT> <FONT COLOR="#000080">+</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">,</FONT>     <FONT COLOR="#008080">/* Identifier. */</FONT>
+    <FONT COLOR="#008000">TOK_STRING</FONT><FONT COLOR="#000080">,</FONT>                 <FONT COLOR="#008080">/* String constant. */</FONT>
+    <FONT COLOR="#008000">TOK_CHAR</FONT><FONT COLOR="#000080">,</FONT>                   <FONT COLOR="#008080">/* Character constant. */</FONT>
+    <FONT COLOR="#008000">TOK_EOF</FONT>                     <FONT COLOR="#008080">/* End of file. */</FONT>
+  <FONT COLOR="#000080">};</FONT>
+
+<B><FONT COLOR="#000080">enum</FONT></B> <FONT COLOR="#008000">token</FONT> <FONT COLOR="#008000">getword</FONT> <FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">word</FONT><FONT COLOR="#000080">,</FONT> <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">lim</FONT><FONT COLOR="#000080">);</FONT>
+
+<B><FONT COLOR="#000080">static</FONT></B> <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">skipws</FONT> <FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">void</FONT></B><FONT COLOR="#000080">);</FONT>
+<B><FONT COLOR="#000080">static</FONT></B> <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">getstelem</FONT> <FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">**,</FONT> <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#000080">*,</FONT> <B><FONT COLOR="#000080">int</FONT></B><FONT COLOR="#000080">);</FONT>
+    
+<B><FONT COLOR="#000080">static</FONT></B> <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">getch</FONT> <FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">void</FONT></B><FONT COLOR="#000080">);</FONT>
+<B><FONT COLOR="#000080">static</FONT></B> <B><FONT COLOR="#000080">void</FONT></B> <FONT COLOR="#008000">ungetch</FONT> <FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">int</FONT></B><FONT COLOR="#000080">);</FONT>
+<B><FONT COLOR="#000080">static</FONT></B> <B><FONT COLOR="#000080">void</FONT></B> <FONT COLOR="#008000">putch</FONT> <FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">**,</FONT> <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#000080">*,</FONT> <B><FONT COLOR="#000080">int</FONT></B><FONT COLOR="#000080">);</FONT>
+
+<FONT COLOR="#008080">/* Main program for testing. */</FONT>
+<B><FONT COLOR="#000080">int</FONT></B>
+<FONT COLOR="#008000">main</FONT> <FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">void</FONT></B><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+  <FONT COLOR="#008000">ungetch</FONT> <FONT COLOR="#000080">(</FONT><FONT COLOR="#000000"><B>'\n'</B></FONT><FONT COLOR="#000080">);</FONT>
+  
+  <B><FONT COLOR="#000080">for</FONT></B> <FONT COLOR="#000080">(;;)</FONT>
+    <FONT COLOR="#000080">{</FONT>
+      <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#008000">word</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#000000"><B>64</B></FONT><FONT COLOR="#000080">];</FONT>
+      <B><FONT COLOR="#000080">enum</FONT></B> <FONT COLOR="#008000">token</FONT> <FONT COLOR="#008000">token</FONT><FONT COLOR="#000080">;</FONT>
+
+      <FONT COLOR="#008080">/* Get token. */</FONT>
+      <FONT COLOR="#008000">token</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">getword</FONT> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">word</FONT><FONT COLOR="#000080">,</FONT> <B><FONT COLOR="#000080">sizeof</FONT></B> <FONT COLOR="#008000">word</FONT><FONT COLOR="#000080">);</FONT>
+
+      <FONT COLOR="#008080">/* Print token type. */</FONT>
+      <B><FONT COLOR="#000080">switch</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">token</FONT><FONT COLOR="#000080">)</FONT>
+        <FONT COLOR="#000080">{</FONT>
+        <B><FONT COLOR="#000080">case</FONT></B> <FONT COLOR="#008000">TOK_ID</FONT><FONT COLOR="#000080">:</FONT>
+          <FONT COLOR="#008000">printf</FONT> <FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;id&quot;</FONT><FONT COLOR="#000080">);</FONT>
+          <B><FONT COLOR="#000080">break</FONT></B><FONT COLOR="#000080">;</FONT>
+
+        <B><FONT COLOR="#000080">case</FONT></B> <FONT COLOR="#008000">TOK_STRING</FONT><FONT COLOR="#000080">:</FONT>
+          <FONT COLOR="#008000">printf</FONT> <FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;string&quot;</FONT><FONT COLOR="#000080">);</FONT>
+          <B><FONT COLOR="#000080">break</FONT></B><FONT COLOR="#000080">;</FONT>
+
+        <B><FONT COLOR="#000080">case</FONT></B> <FONT COLOR="#008000">TOK_CHAR</FONT><FONT COLOR="#000080">:</FONT>
+          <FONT COLOR="#008000">printf</FONT> <FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;char&quot;</FONT><FONT COLOR="#000080">);</FONT>
+          <B><FONT COLOR="#000080">break</FONT></B><FONT COLOR="#000080">;</FONT>
+
+        <B><FONT COLOR="#000080">case</FONT></B> <FONT COLOR="#008000">TOK_EOF</FONT><FONT COLOR="#000080">:</FONT>
+          <FONT COLOR="#008000">printf</FONT> <FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;eof\n&quot;</FONT><FONT COLOR="#000080">);</FONT>
+          <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+
+        <B><FONT COLOR="#000080">default</FONT></B><FONT COLOR="#000080">:</FONT>
+          <FONT COLOR="#008000">printf</FONT> <FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;other&quot;</FONT><FONT COLOR="#000080">);</FONT>
+          <FONT COLOR="#008000">word</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">token</FONT><FONT COLOR="#000080">;</FONT>
+          <FONT COLOR="#008000">word</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>'\0'</B></FONT><FONT COLOR="#000080">;</FONT>
+          <B><FONT COLOR="#000080">break</FONT></B><FONT COLOR="#000080">;</FONT>
+        <FONT COLOR="#000080">}</FONT>
+
+      <FONT COLOR="#008080">/* Print token value more or less unambiguously. */</FONT>
+      <FONT COLOR="#000080">{</FONT>
+        <B><FONT COLOR="#000080">const</FONT></B> <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">;</FONT>
+
+        <FONT COLOR="#008000">printf</FONT> <FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;\t'&quot;</FONT><FONT COLOR="#000080">);</FONT>
+        <B><FONT COLOR="#000080">for</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">s</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">word</FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">s</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#000000"><B>'\0'</B></FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">++)</FONT>
+          <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">isprint</FONT> <FONT COLOR="#000080">(*</FONT><FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">&amp;&amp;</FONT> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">s</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#000000"><B>'\''</B></FONT><FONT COLOR="#000080">)</FONT>
+            <FONT COLOR="#008000">putchar</FONT> <FONT COLOR="#000080">(*</FONT><FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">);</FONT>
+          <B><FONT COLOR="#000080">else</FONT></B> <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(*</FONT><FONT COLOR="#008000">s</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'\''</B></FONT><FONT COLOR="#000080">)</FONT>
+            <FONT COLOR="#008000">printf</FONT> <FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;\\'&quot;</FONT><FONT COLOR="#000080">);</FONT>
+          <B><FONT COLOR="#000080">else</FONT></B>
+            <FONT COLOR="#008080">/* Potentially wrong. */</FONT>
+            <FONT COLOR="#008000">printf</FONT> <FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;\\x%02x&quot;</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">s</FONT><FONT COLOR="#000080">);</FONT>
+        <FONT COLOR="#008000">printf</FONT> <FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;'\n&quot;</FONT><FONT COLOR="#000080">);</FONT>
+      <FONT COLOR="#000080">}</FONT>
+    <FONT COLOR="#000080">}</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+<FONT COLOR="#008080">/* Parses C-like tokens from stdin:
+
+        - Parses C identifiers and string and character constants.
+
+        - Other characters, such as operators, punctuation, and digits
+          not part of identifiers are considered as tokens in
+          themselves.
+
+        - Skip comments and preprocessor control lines.
+
+   Does not handle trigraphs, line continuation with \, or numerous
+   other special C features.
+
+   Returns a token type.  This is either one of TOK_* above, or a single
+   character in the range 0...UCHAR_MAX.
+
+   If TOK_ID, TOK_STRING, or TOK_CHAR is returned, WORD[] is filled
+   with the identifier or string value, truncated at LIM - 1
+   characters and terminated with '\0'.
+
+   For other returned token types, WORD[] is indeterminate. */</FONT>
+<B><FONT COLOR="#000080">enum</FONT></B> <FONT COLOR="#008000">token</FONT>
+<FONT COLOR="#008000">getword</FONT> <FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">word</FONT><FONT COLOR="#000080">,</FONT> <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">lim</FONT><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+  <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">beg_line</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">;</FONT>
+  
+  <B><FONT COLOR="#000080">for</FONT></B> <FONT COLOR="#000080">(;;)</FONT>
+    <FONT COLOR="#000080">{</FONT>
+      <FONT COLOR="#008000">beg_line</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">skipws</FONT> <FONT COLOR="#000080">();</FONT>
+      <FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">getch</FONT> <FONT COLOR="#000080">();</FONT>
+
+      <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(!</FONT><FONT COLOR="#008000">beg_line</FONT> <FONT COLOR="#000080">||</FONT> <FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#000000"><B>'#'</B></FONT><FONT COLOR="#000080">)</FONT>
+        <B><FONT COLOR="#000080">break</FONT></B><FONT COLOR="#000080">;</FONT>
+      
+      <FONT COLOR="#008080">/* Skip preprocessor directive. */</FONT>
+      <B><FONT COLOR="#000080">do</FONT></B>
+        <FONT COLOR="#000080">{</FONT>
+          <FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">getch</FONT> <FONT COLOR="#000080">();</FONT>
+          <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#008000">EOF</FONT><FONT COLOR="#000080">)</FONT>
+            <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#008000">TOK_EOF</FONT><FONT COLOR="#000080">;</FONT>
+        <FONT COLOR="#000080">}</FONT>
+      <B><FONT COLOR="#000080">while</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#000000"><B>'\n'</B></FONT><FONT COLOR="#000080">);</FONT>
+      <FONT COLOR="#008000">ungetch</FONT> <FONT COLOR="#000080">(</FONT><FONT COLOR="#000000"><B>'\n'</B></FONT><FONT COLOR="#000080">);</FONT>
+    <FONT COLOR="#000080">}</FONT>
+  
+  <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#008000">EOF</FONT><FONT COLOR="#000080">)</FONT>
+    <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#008000">TOK_EOF</FONT><FONT COLOR="#000080">;</FONT>
+  <B><FONT COLOR="#000080">else</FONT></B> <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'_'</B></FONT> <FONT COLOR="#000080">||</FONT> <FONT COLOR="#008000">isalpha</FONT> <FONT COLOR="#000080">((</FONT><B><FONT COLOR="#000080">unsigned</FONT></B> <B><FONT COLOR="#000080">char</FONT></B><FONT COLOR="#000080">)</FONT> <FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">))</FONT>
+    <FONT COLOR="#000080">{</FONT>
+      <B><FONT COLOR="#000080">do</FONT></B>
+        <FONT COLOR="#000080">{</FONT>
+          <FONT COLOR="#008000">putch</FONT> <FONT COLOR="#000080">(&amp;</FONT><FONT COLOR="#008000">word</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000080">&amp;</FONT><FONT COLOR="#008000">lim</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">);</FONT>
+          <FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">getch</FONT> <FONT COLOR="#000080">();</FONT>
+        <FONT COLOR="#000080">}</FONT>
+      <B><FONT COLOR="#000080">while</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">isalnum</FONT> <FONT COLOR="#000080">((</FONT><B><FONT COLOR="#000080">unsigned</FONT></B> <B><FONT COLOR="#000080">char</FONT></B><FONT COLOR="#000080">)</FONT> <FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">)</FONT> <FONT COLOR="#000080">||</FONT> <FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'_'</B></FONT><FONT COLOR="#000080">);</FONT>
+
+      <FONT COLOR="#008000">ungetch</FONT> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">);</FONT>
+      <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#008000">TOK_ID</FONT><FONT COLOR="#000080">;</FONT>
+    <FONT COLOR="#000080">}</FONT>
+  <B><FONT COLOR="#000080">else</FONT></B> <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'\''</B></FONT> <FONT COLOR="#000080">||</FONT> <FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'&quot;'</B></FONT><FONT COLOR="#000080">)</FONT>
+    <FONT COLOR="#000080">{</FONT>
+      <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">quote</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">;</FONT>
+      <FONT COLOR="#008000">word</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>'\0'</B></FONT><FONT COLOR="#000080">;</FONT>
+      <B><FONT COLOR="#000080">while</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">getstelem</FONT> <FONT COLOR="#000080">(&amp;</FONT><FONT COLOR="#008000">word</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#000080">&amp;</FONT><FONT COLOR="#008000">lim</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">quote</FONT><FONT COLOR="#000080">))</FONT>
+        <FONT COLOR="#000080">;</FONT>
+      <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#008000">quote</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'\''</B></FONT> <FONT COLOR="#000080">?</FONT> <FONT COLOR="#008000">TOK_CHAR</FONT> <FONT COLOR="#000080">:</FONT> <FONT COLOR="#008000">TOK_STRING</FONT><FONT COLOR="#000080">;</FONT>
+    <FONT COLOR="#000080">}</FONT>
+  <B><FONT COLOR="#000080">else</FONT></B>
+    <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">unsigned</FONT></B> <B><FONT COLOR="#000080">char</FONT></B><FONT COLOR="#000080">)</FONT> <FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">;</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+<FONT COLOR="#008080">/* Skips whitespace and comments read from stdin.
+   Returns nonzero if a newline was encountered, indicating that we're
+   at the beginning of a line. */</FONT>
+<B><FONT COLOR="#000080">static</FONT></B> <B><FONT COLOR="#000080">int</FONT></B>
+<FONT COLOR="#008000">skipws</FONT> <FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">void</FONT></B><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+  <FONT COLOR="#008080">/* Classification of an input character. */</FONT>
+  <B><FONT COLOR="#000080">enum</FONT></B> <FONT COLOR="#008000">class</FONT>
+    <FONT COLOR="#000080">{</FONT>
+      <FONT COLOR="#008000">CLS_WS</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">,</FONT>               <FONT COLOR="#008080">/* Whitespace. */</FONT>
+      <FONT COLOR="#008000">CLS_BEG_CMT</FONT><FONT COLOR="#000080">,</FONT>              <FONT COLOR="#008080">/* Slash-star beginning a comment. */</FONT>
+      <FONT COLOR="#008000">CLS_END_CMT</FONT><FONT COLOR="#000080">,</FONT>              <FONT COLOR="#008080">/* Star-slash ending a comment. */</FONT>
+      <FONT COLOR="#008000">CLS_OTHER</FONT><FONT COLOR="#000080">,</FONT>                <FONT COLOR="#008080">/* None of the above. */</FONT>
+
+      <FONT COLOR="#008000">CLS_IN_CMT</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>4</B></FONT>            <FONT COLOR="#008080">/* Combined with one of the above,
+                                   indicates we're inside a comment. */</FONT>
+    <FONT COLOR="#000080">};</FONT>
+
+  <FONT COLOR="#008080">/* Either 0, if we're not inside a comment,
+     or CLS_IN_CMT, if we are inside a comment. */</FONT>
+  <B><FONT COLOR="#000080">enum</FONT></B> <FONT COLOR="#008000">class</FONT> <FONT COLOR="#008000">in_comment</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+
+  <FONT COLOR="#008080">/* Have we encountered a newline outside a comment? */</FONT>
+  <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">beg_line</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+  
+  <B><FONT COLOR="#000080">for</FONT></B> <FONT COLOR="#000080">(;;)</FONT>
+    <FONT COLOR="#000080">{</FONT>
+      <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">;</FONT>                    <FONT COLOR="#008080">/* Input character. */</FONT>
+      <B><FONT COLOR="#000080">enum</FONT></B> <FONT COLOR="#008000">class</FONT> <FONT COLOR="#008000">class</FONT><FONT COLOR="#000080">;</FONT>         <FONT COLOR="#008080">/* Classification of `c'. */</FONT>
+
+      <FONT COLOR="#008080">/* Get an input character and determine its classification. */</FONT>
+      <FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">getch</FONT> <FONT COLOR="#000080">();</FONT>
+      <B><FONT COLOR="#000080">switch</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">)</FONT>
+        <FONT COLOR="#000080">{</FONT>
+        <B><FONT COLOR="#000080">case</FONT></B> <FONT COLOR="#000000"><B>'\n'</B></FONT><FONT COLOR="#000080">:</FONT>
+          <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(!</FONT><FONT COLOR="#008000">in_comment</FONT><FONT COLOR="#000080">)</FONT>
+            <FONT COLOR="#008000">beg_line</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">;</FONT>
+          <FONT COLOR="#008080">/* Fall through. */</FONT>
+          
+        <B><FONT COLOR="#000080">case</FONT></B> <FONT COLOR="#000000"><B>' '</B></FONT><FONT COLOR="#000080">:</FONT> <B><FONT COLOR="#000080">case</FONT></B> <FONT COLOR="#000000"><B>'\f'</B></FONT><FONT COLOR="#000080">:</FONT> <B><FONT COLOR="#000080">case</FONT></B> <FONT COLOR="#000000"><B>'\r'</B></FONT><FONT COLOR="#000080">:</FONT> <B><FONT COLOR="#000080">case</FONT></B> <FONT COLOR="#000000"><B>'\t'</B></FONT><FONT COLOR="#000080">:</FONT> <B><FONT COLOR="#000080">case</FONT></B> <FONT COLOR="#000000"><B>'\v'</B></FONT><FONT COLOR="#000080">:</FONT>
+          <FONT COLOR="#008000">class</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">CLS_WS</FONT><FONT COLOR="#000080">;</FONT>
+          <B><FONT COLOR="#000080">break</FONT></B><FONT COLOR="#000080">;</FONT>
+
+        <B><FONT COLOR="#000080">case</FONT></B> <FONT COLOR="#000000"><B>'/'</B></FONT><FONT COLOR="#000080">:</FONT>
+          <FONT COLOR="#008080">/* Outside a comment, slash-star begins a comment. */</FONT>
+          <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(!</FONT><FONT COLOR="#008000">in_comment</FONT><FONT COLOR="#000080">)</FONT>
+            <FONT COLOR="#000080">{</FONT>
+              <FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">getch</FONT> <FONT COLOR="#000080">();</FONT>
+              <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'*'</B></FONT><FONT COLOR="#000080">)</FONT>
+                <FONT COLOR="#008000">class</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">CLS_BEG_CMT</FONT><FONT COLOR="#000080">;</FONT>
+              <B><FONT COLOR="#000080">else</FONT></B>
+                <FONT COLOR="#000080">{</FONT>
+                  <FONT COLOR="#008000">ungetch</FONT> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">);</FONT>
+                  <FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>'/'</B></FONT><FONT COLOR="#000080">;</FONT>
+                  <FONT COLOR="#008000">class</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">CLS_OTHER</FONT><FONT COLOR="#000080">;</FONT>
+                <FONT COLOR="#000080">}</FONT>
+            <FONT COLOR="#000080">}</FONT>
+          <B><FONT COLOR="#000080">else</FONT></B>
+            <FONT COLOR="#008000">class</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">CLS_OTHER</FONT><FONT COLOR="#000080">;</FONT>
+          <B><FONT COLOR="#000080">break</FONT></B><FONT COLOR="#000080">;</FONT>
+
+        <B><FONT COLOR="#000080">case</FONT></B> <FONT COLOR="#000000"><B>'*'</B></FONT><FONT COLOR="#000080">:</FONT>
+          <FONT COLOR="#008080">/* Inside a comment, star-slash ends the comment. */</FONT>
+          <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">in_comment</FONT><FONT COLOR="#000080">)</FONT>
+            <FONT COLOR="#000080">{</FONT>
+              <FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">getch</FONT> <FONT COLOR="#000080">();</FONT>
+              <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'/'</B></FONT><FONT COLOR="#000080">)</FONT>
+                <FONT COLOR="#008000">class</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">CLS_END_CMT</FONT><FONT COLOR="#000080">;</FONT>
+              <B><FONT COLOR="#000080">else</FONT></B>
+                <FONT COLOR="#000080">{</FONT>
+                  <FONT COLOR="#008000">ungetch</FONT> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">);</FONT>
+                  <FONT COLOR="#008000">class</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">CLS_OTHER</FONT><FONT COLOR="#000080">;</FONT>
+                <FONT COLOR="#000080">}</FONT>
+            <FONT COLOR="#000080">}</FONT>
+          <B><FONT COLOR="#000080">else</FONT></B>
+            <FONT COLOR="#008000">class</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">CLS_OTHER</FONT><FONT COLOR="#000080">;</FONT>
+          <B><FONT COLOR="#000080">break</FONT></B><FONT COLOR="#000080">;</FONT>
+
+        <B><FONT COLOR="#000080">default</FONT></B><FONT COLOR="#000080">:</FONT>
+          <FONT COLOR="#008080">/* Other characters. */</FONT>
+          <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#008000">EOF</FONT><FONT COLOR="#000080">)</FONT>
+            <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+          <FONT COLOR="#008000">class</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">CLS_OTHER</FONT><FONT COLOR="#000080">;</FONT>
+        <FONT COLOR="#000080">}</FONT>
+
+      <FONT COLOR="#008080">/* Handle character `c' according to its classification
+         and whether we're inside a comment. */</FONT>
+      <B><FONT COLOR="#000080">switch</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">class</FONT> <FONT COLOR="#000080">|</FONT> <FONT COLOR="#008000">in_comment</FONT><FONT COLOR="#000080">)</FONT>
+        <FONT COLOR="#000080">{</FONT>
+        <B><FONT COLOR="#000080">case</FONT></B> <FONT COLOR="#008000">CLS_WS</FONT><FONT COLOR="#000080">:</FONT>
+        <B><FONT COLOR="#000080">case</FONT></B> <FONT COLOR="#008000">CLS_WS</FONT> <FONT COLOR="#000080">|</FONT> <FONT COLOR="#008000">CLS_IN_CMT</FONT><FONT COLOR="#000080">:</FONT>
+        <B><FONT COLOR="#000080">case</FONT></B> <FONT COLOR="#008000">CLS_OTHER</FONT> <FONT COLOR="#000080">|</FONT> <FONT COLOR="#008000">CLS_IN_CMT</FONT><FONT COLOR="#000080">:</FONT>
+          <B><FONT COLOR="#000080">break</FONT></B><FONT COLOR="#000080">;</FONT>
+
+        <B><FONT COLOR="#000080">case</FONT></B> <FONT COLOR="#008000">CLS_BEG_CMT</FONT><FONT COLOR="#000080">:</FONT>
+          <FONT COLOR="#008000">in_comment</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">CLS_IN_CMT</FONT><FONT COLOR="#000080">;</FONT>
+          <B><FONT COLOR="#000080">break</FONT></B><FONT COLOR="#000080">;</FONT>
+
+        <B><FONT COLOR="#000080">case</FONT></B> <FONT COLOR="#008000">CLS_OTHER</FONT><FONT COLOR="#000080">:</FONT>
+          <FONT COLOR="#008000">ungetch</FONT> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">);</FONT>
+          <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#008000">beg_line</FONT><FONT COLOR="#000080">;</FONT>
+
+        <B><FONT COLOR="#000080">case</FONT></B> <FONT COLOR="#008000">CLS_END_CMT</FONT> <FONT COLOR="#000080">|</FONT> <FONT COLOR="#008000">CLS_IN_CMT</FONT><FONT COLOR="#000080">:</FONT>
+          <FONT COLOR="#008000">in_comment</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+          <B><FONT COLOR="#000080">break</FONT></B><FONT COLOR="#000080">;</FONT>
+
+        <B><FONT COLOR="#000080">case</FONT></B> <FONT COLOR="#008000">CLS_BEG_CMT</FONT> <FONT COLOR="#000080">|</FONT> <FONT COLOR="#008000">CLS_IN_CMT</FONT><FONT COLOR="#000080">:</FONT>
+        <B><FONT COLOR="#000080">case</FONT></B> <FONT COLOR="#008000">CLS_END_CMT</FONT><FONT COLOR="#000080">:</FONT>
+        <B><FONT COLOR="#000080">default</FONT></B><FONT COLOR="#000080">:</FONT>
+          <FONT COLOR="#008000">printf</FONT> <FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;can't happen\n&quot;</FONT><FONT COLOR="#000080">);</FONT>
+          <B><FONT COLOR="#000080">break</FONT></B><FONT COLOR="#000080">;</FONT>
+        <FONT COLOR="#000080">}</FONT>
+    <FONT COLOR="#000080">}</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+<FONT COLOR="#008080">/* Get a character inside a quoted string or character constant.
+   QUOTE is ' for a character constant or &quot; for a quoted string.
+   *WORDP points to a string being constructed that has *LIMP bytes
+   available. */</FONT>
+<B><FONT COLOR="#000080">static</FONT></B> <B><FONT COLOR="#000080">int</FONT></B> 
+<FONT COLOR="#008000">getstelem</FONT> <FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">**</FONT><FONT COLOR="#008000">wordp</FONT><FONT COLOR="#000080">,</FONT> <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">limp</FONT><FONT COLOR="#000080">,</FONT> <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">quote</FONT><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+  <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">;</FONT>
+
+  <FONT COLOR="#008080">/* Handle end-of-quote and EOF. */</FONT>
+  <FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">getch</FONT> <FONT COLOR="#000080">();</FONT>
+  <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#008000">quote</FONT> <FONT COLOR="#000080">||</FONT> <FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#008000">EOF</FONT><FONT COLOR="#000080">)</FONT>
+    <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+
+  <FONT COLOR="#008080">/* Handle ordinary string characters. */</FONT>
+  <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#000000"><B>'\\'</B></FONT><FONT COLOR="#000080">)</FONT>
+    <FONT COLOR="#000080">{</FONT>
+      <FONT COLOR="#008000">putch</FONT> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">wordp</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">limp</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">);</FONT>
+      <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">;</FONT>
+    <FONT COLOR="#000080">}</FONT>
+
+  <FONT COLOR="#008080">/* We're in a \ escape sequence.
+     Get the second character. */</FONT>
+  <FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">getch</FONT> <FONT COLOR="#000080">();</FONT>
+  <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#008000">EOF</FONT><FONT COLOR="#000080">)</FONT>
+    <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+
+  <FONT COLOR="#008080">/* Handle simple single-character escapes. */</FONT>
+  <FONT COLOR="#000080">{</FONT>
+    <B><FONT COLOR="#000080">static</FONT></B> <B><FONT COLOR="#000080">const</FONT></B> <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#008000">escapes</FONT><FONT COLOR="#000080">[]</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000080">{</FONT><FONT COLOR="#000000">&quot;''??\&quot;\&quot;\\\\a\ab\bf\fn\nr\rt\tv\v&quot;</FONT><FONT COLOR="#000080">};</FONT>
+    <B><FONT COLOR="#000080">const</FONT></B> <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">cp</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">strchr</FONT> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">escapes</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">);</FONT>
+    <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">cp</FONT> <FONT COLOR="#000080">!=</FONT> <FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">)</FONT>
+      <FONT COLOR="#000080">{</FONT>
+        <FONT COLOR="#008000">putch</FONT> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">wordp</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">limp</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">cp</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">]);</FONT>
+        <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">;</FONT>
+      <FONT COLOR="#000080">}</FONT>
+  <FONT COLOR="#000080">}</FONT>
+
+  <FONT COLOR="#008080">/* Handle hexadecimal and octal escapes.
+     This also handles invalid escapes by default,
+     doing nothing useful with them.
+     That's okay because invalid escapes generate undefined behavior. */</FONT>
+  <FONT COLOR="#000080">{</FONT>
+    <B><FONT COLOR="#000080">unsigned</FONT></B> <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#008000">v</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+
+    <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'x'</B></FONT> <FONT COLOR="#000080">||</FONT> <FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#000000"><B>'X'</B></FONT><FONT COLOR="#000080">)</FONT>
+      <B><FONT COLOR="#000080">for</FONT></B> <FONT COLOR="#000080">(;;)</FONT>
+        <FONT COLOR="#000080">{</FONT>
+          <B><FONT COLOR="#000080">static</FONT></B> <B><FONT COLOR="#000080">const</FONT></B> <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#008000">hexits</FONT><FONT COLOR="#000080">[]</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000">&quot;0123456789abcdef&quot;</FONT><FONT COLOR="#000080">;</FONT>
+          <B><FONT COLOR="#000080">const</FONT></B> <B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">p</FONT><FONT COLOR="#000080">;</FONT>
+
+          <FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">getch</FONT> <FONT COLOR="#000080">();</FONT>
+          <FONT COLOR="#008000">p</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">strchr</FONT> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">hexits</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">tolower</FONT> <FONT COLOR="#000080">((</FONT><B><FONT COLOR="#000080">unsigned</FONT></B> <B><FONT COLOR="#000080">char</FONT></B><FONT COLOR="#000080">)</FONT> <FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">));</FONT>
+          <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">p</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#008000">NULL</FONT><FONT COLOR="#000080">)</FONT>
+            <B><FONT COLOR="#000080">break</FONT></B><FONT COLOR="#000080">;</FONT>
+          <FONT COLOR="#008000">v</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">v</FONT> <FONT COLOR="#000080">*</FONT> <FONT COLOR="#000000"><B>16</B></FONT> <FONT COLOR="#000080">+</FONT> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">p</FONT> <FONT COLOR="#000080">-</FONT> <FONT COLOR="#008000">hexits</FONT><FONT COLOR="#000080">);</FONT>
+        <FONT COLOR="#000080">}</FONT>
+    <B><FONT COLOR="#000080">else</FONT></B>
+      <FONT COLOR="#000080">{</FONT>
+        <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">;</FONT>
+
+        <B><FONT COLOR="#000080">for</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">i</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008000">i</FONT> <FONT COLOR="#000080">&lt;</FONT> <FONT COLOR="#000000"><B>3</B></FONT><FONT COLOR="#000080">;</FONT> <FONT COLOR="#008000">i</FONT><FONT COLOR="#000080">++)</FONT>
+          <FONT COLOR="#000080">{</FONT>
+            <FONT COLOR="#008000">v</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">v</FONT> <FONT COLOR="#000080">*</FONT> <FONT COLOR="#000000"><B>8</B></FONT> <FONT COLOR="#000080">+</FONT> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">-</FONT> <FONT COLOR="#000000"><B>'0'</B></FONT><FONT COLOR="#000080">);</FONT>
+            <FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">getch</FONT> <FONT COLOR="#000080">();</FONT>
+            <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">&lt;</FONT> <FONT COLOR="#000000"><B>'0'</B></FONT> <FONT COLOR="#000080">||</FONT> <FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">&gt;</FONT> <FONT COLOR="#000000"><B>'7'</B></FONT><FONT COLOR="#000080">)</FONT>
+              <B><FONT COLOR="#000080">break</FONT></B><FONT COLOR="#000080">;</FONT>
+          <FONT COLOR="#000080">}</FONT>
+      <FONT COLOR="#000080">}</FONT>
+        
+    <FONT COLOR="#008000">putch</FONT> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">wordp</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">limp</FONT><FONT COLOR="#000080">,</FONT> <FONT COLOR="#008000">v</FONT><FONT COLOR="#000080">);</FONT>
+    <FONT COLOR="#008000">ungetch</FONT> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">);</FONT>
+  <FONT COLOR="#000080">}</FONT>
+  
+  <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">;</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+<FONT COLOR="#008080">/* Capacity of putback buffer. */</FONT>
+<FONT COLOR="#0000FF"><B>#define BUFSIZE 100</B></FONT>
+
+<FONT COLOR="#008080">/* Putback buffer. */</FONT>
+<B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#008000">buf</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">BUFSIZE</FONT><FONT COLOR="#000080">];</FONT>
+
+<FONT COLOR="#008080">/* Number of characters in putback buffer. */</FONT>
+<B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">bufp</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">;</FONT>
+
+<FONT COLOR="#008080">/* Retrieves and returns a character from stdin or from the putback
+   buffer.
+   Returns EOF if end of file is encountered. */</FONT>
+<B><FONT COLOR="#000080">int</FONT></B> 
+<FONT COLOR="#008000">getch</FONT> <FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">void</FONT></B><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+  <B><FONT COLOR="#000080">return</FONT></B> <FONT COLOR="#008000">bufp</FONT> <FONT COLOR="#000080">&gt;</FONT> <FONT COLOR="#000000"><B>0</B></FONT> <FONT COLOR="#000080">?</FONT> <FONT COLOR="#008000">buf</FONT><FONT COLOR="#000080">[--</FONT><FONT COLOR="#008000">bufp</FONT><FONT COLOR="#000080">]</FONT> <FONT COLOR="#000080">:</FONT> <FONT COLOR="#008000">getchar</FONT> <FONT COLOR="#000080">();</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+<FONT COLOR="#008080">/* Stuffs character C into the putback buffer.
+   From the caller's perspective, fails silently if the putback buffer
+   is full. */</FONT>
+<B><FONT COLOR="#000080">void</FONT></B>
+<FONT COLOR="#008000">ungetch</FONT> <FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+  <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">c</FONT> <FONT COLOR="#000080">==</FONT> <FONT COLOR="#008000">EOF</FONT><FONT COLOR="#000080">)</FONT>
+    <B><FONT COLOR="#000080">return</FONT></B><FONT COLOR="#000080">;</FONT>
+  
+  <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(</FONT><FONT COLOR="#008000">bufp</FONT> <FONT COLOR="#000080">&gt;=</FONT> <FONT COLOR="#008000">BUFSIZE</FONT><FONT COLOR="#000080">)</FONT>
+    <FONT COLOR="#008000">printf</FONT> <FONT COLOR="#000080">(</FONT><FONT COLOR="#000000">&quot;ungetch: too many characters\n&quot;</FONT><FONT COLOR="#000080">);</FONT>
+  <B><FONT COLOR="#000080">else</FONT></B>
+    <FONT COLOR="#008000">buf</FONT><FONT COLOR="#000080">[</FONT><FONT COLOR="#008000">bufp</FONT><FONT COLOR="#000080">++]</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">;</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+<FONT COLOR="#008080">/* Stuffs character C into buffer *WORDP, which has *LIMP bytes
+   available.
+   Advances *WORDP and reduces *LIMP as appropriate.
+   Drops the character on the floor if it would overflow the buffer.
+   Ensures that *WORDP is null terminated if possible. */</FONT>
+<B><FONT COLOR="#000080">static</FONT></B> <B><FONT COLOR="#000080">void</FONT></B> 
+<FONT COLOR="#008000">putch</FONT> <FONT COLOR="#000080">(</FONT><B><FONT COLOR="#000080">char</FONT></B> <FONT COLOR="#000080">**</FONT><FONT COLOR="#008000">wordp</FONT><FONT COLOR="#000080">,</FONT> <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#000080">*</FONT><FONT COLOR="#008000">limp</FONT><FONT COLOR="#000080">,</FONT> <B><FONT COLOR="#000080">int</FONT></B> <FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">)</FONT>
+<FONT COLOR="#000080">{</FONT>
+  <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(*</FONT><FONT COLOR="#008000">limp</FONT> <FONT COLOR="#000080">&gt;</FONT> <FONT COLOR="#000000"><B>1</B></FONT><FONT COLOR="#000080">)</FONT>
+    <FONT COLOR="#000080">{</FONT>
+      <FONT COLOR="#000080">*(*</FONT><FONT COLOR="#008000">wordp</FONT><FONT COLOR="#000080">)++</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#008000">c</FONT><FONT COLOR="#000080">;</FONT>
+      <FONT COLOR="#000080">(*</FONT><FONT COLOR="#008000">limp</FONT><FONT COLOR="#000080">)--;</FONT>
+    <FONT COLOR="#000080">}</FONT>
+  <B><FONT COLOR="#000080">if</FONT></B> <FONT COLOR="#000080">(*</FONT><FONT COLOR="#008000">limp</FONT> <FONT COLOR="#000080">&gt;</FONT> <FONT COLOR="#000000"><B>0</B></FONT><FONT COLOR="#000080">)</FONT>
+    <FONT COLOR="#000080">**</FONT><FONT COLOR="#008000">wordp</FONT> <FONT COLOR="#000080">=</FONT> <FONT COLOR="#000000"><B>'\0'</B></FONT><FONT COLOR="#000080">;</FONT>
+<FONT COLOR="#000080">}</FONT>
+
+<FONT COLOR="#008080">/* 
+   Local variables:
+   compile-command: &quot;checkergcc -W -Wall -ansi -pedantic knr61.c -o knr61&quot;
+   End: 
+*/</FONT>
+
+</pre>
+</code>
+
+
+<br>
+
+<a href=index.html>  Back to index </a></body></html>
