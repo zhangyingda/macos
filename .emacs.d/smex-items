@@ -1,0 +1,21 @@
+
+;; ----- smex-history -----
+(
+ org-mode
+ package-list-packages
+ isearch-exit
+ flymake-mode
+ execute-extended-command
+ smex
+ cd
+)
+
+;; ----- smex-data -----
+(
+ (smex . 1)
+ (execute-extended-command . 1)
+ (isearch-exit . 2)
+ (flymake-mode . 1)
+ (package-list-packages . 3)
+ (org-mode . 2)
+)
