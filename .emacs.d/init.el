@@ -4,9 +4,11 @@
 
 (require 'package)
 (package-initialize)
-(setq package-archives '(("melpa-cn"."https://mirrors.tuna.tsinghua.edu.cn/elpa/melpa/")
-			 ("gnu-cn"."https://mirrors.tuna.tsinghua.edu.cn/elpa/gnu")
-			 ("org"."https://orgmode.org/elpa/")))
+(setq package-archives
+      '(("melpa-cn" . "https://elpa.emacs-china.org/melpa/")
+        ("org-cn"   . "https://elpa.emacs-china.org/org/")
+        ("gnu-cn"   . "https://elpa.emacs-china.org/gnu/")))
+
 
 (require 'cl)
 
@@ -20,7 +22,7 @@
 
 ;; 全屏，无标题栏
 ;;(setq initial-frame-alist (quote ((fullscreen . maximized))))
-(toggle-frame-fullscreen)
+;;(toggle-frame-fullscreen)
 
 ;; 关闭菜单、工具栏、滚动条 F10 可以打开菜单
 (tool-bar-mode -1)
@@ -52,7 +54,7 @@
   (run-with-idle-timer 5 t #'garbage-collect))
 
 (add-to-list 'default-frame-alist
-	     '(font . "Source Code Pro-10"))
+	     '(font . "Hack Nerd Font Mono-10"))
 
 ;; 简化 yes or no
 (fset 'yes-or-no-p 'y-or-n-p)
@@ -66,7 +68,10 @@
 
 ;; 不生成备份文件
 (setq-default make-backup-files nil)
+(setq-default auto-save-default nil)
 
+
+;; 选中文本可以直接被新输入的字符替换掉
 (delete-selection-mode t)
 
 
@@ -112,7 +117,9 @@
 (require 'yasnippet)
 (yas-global-mode 1)
 
-
+;; 自动补全
+(global-company-mode t)
+(add-to-list 'company-backends 'company-c-headers)
 
 (ivy-mode 1)
 (setq ivy-use-virtual-buffers t)
@@ -133,7 +140,7 @@
 (global-set-key (kbd "C-h C-k") 'find-function-on-key)
 
 (global-linum-mode t)
-(global-company-mode t)
+
 
 (recentf-mode t)
 (turn-on-smartparens-mode)
@@ -149,10 +156,31 @@
 ;; 最近打开文件 快捷键定义为 C-x C-r
 (global-set-key (kbd "C-x C-r") 'recentf-open-files)
 
-; 设置时间戳，标识出最后一次保存文件的时间
+                                        ; 设置时间戳，标识出最后一次保存文件的时间
 (setq time-stamp-active t)
 (setq time-stamp-warn-inactive t)
 (setq time-stamp-format "%:y-%02m-%02d %3a %02H:%02M:%02S Lonely")
+
+
+(setenv "GTAGSLIBPATH" (concat "D:/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/include/c++"
+                               ":"
+                               "D:/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/include/c++/x86_64-w64-mingw32"
+                               ":"
+                               "D:/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/include/c++/backward"
+                               ":"
+                               "D:/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/include"
+                               ":"
+                               "D:/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/include-fixed"
+                               ":"
+                               "
+D:/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/../../../../x86_64-w64-mingw32/include"
+                               ":"
+                               (file-truename "D:/code/c")
+                               ":"
+                               (file-truename "D:/code/cpp")))
+(setenv "MAKEOBJDIRPREFIX" (file-truename "d:/code/GTAGS"))
+
+(setq comany-backends '((company-dabbrev-code company-gtags)))
 
 ;; C language setting
 (add-hook 'c-mode-hook
@@ -171,6 +199,7 @@
              (setq tab-width 4)
              (setq indent-tabs-mode t)
              (setq highlight-parentheses-mode t)
+             (setq c-hanging-semi&comma-criteria nil)
              (setq c-basic-offset 4)))
 
 ;; C++ language setting
@@ -195,9 +224,12 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(company-c-headers-path-system
+   (quote
+    ("D:/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/include/c++" "D:/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/include/c++/x86_64-w64-mingw32" "D:/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/include/c++/backward" "D:/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/include" "D:/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/include-fixed" "D:/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/../../../../x86_64-w64-mingw32/include")))
  '(package-selected-packages
    (quote
-    (smex color-identifiers-mode rainbow-identifiers helm helm-descbinds helm-flx highlight-numbers anzu auto-highlight-symbol highlight-parentheses clang-format company-c-headers company-ctags company-ycmd helm-cscope helm-gtags ggtags swiper counsel hungry-delete ivy popwin solarized-theme powerline smartparens neotree company))))
+    (yasnippet-snippets smart-yank yasnippet-classic-snippets smex color-identifiers-mode rainbow-identifiers helm helm-descbinds helm-flx highlight-numbers anzu auto-highlight-symbol highlight-parentheses company-c-headers company-ycmd helm-cscope counsel hungry-delete ivy popwin solarized-theme powerline smartparens neotree company))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.

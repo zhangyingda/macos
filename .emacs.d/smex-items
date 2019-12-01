@@ -1,13 +1,13 @@
 
 ;; ----- smex-history -----
 (
- org-mode
- package-list-packages
- isearch-exit
- flymake-mode
- execute-extended-command
- smex
- cd
+ gud-gdb
+ company-c-headers
+ customize-group
+ package-delete
+ counsel-gtags-mode
+ company-gtags
+ package-install
 )
 
 ;; ----- smex-data -----
@@ -16,6 +16,18 @@
  (execute-extended-command . 1)
  (isearch-exit . 2)
  (flymake-mode . 1)
- (package-list-packages . 3)
+ (package-list-packages . 9)
  (org-mode . 2)
+ (revert-buffer . 1)
+ (package-delete . 10)
+ (recover-file . 1)
+ (package-install . 9)
+ (package-refresh-contents . 10)
+ (clang-format . 1)
+ (auto-complete-mode . 8)
+ (company-gtags . 2)
+ (counsel-gtags-mode . 1)
+ (company-c-headers . 3)
+ (customize-group . 1)
+ (gud-gdb . 1)
 )
